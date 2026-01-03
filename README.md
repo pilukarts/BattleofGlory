@@ -1,4 +1,8 @@
-# Battle of Glory
+i# Battle of Glory
+
+En fase de  desarrollo y tests.
+in development and testing phase.
+
 
 Un juego de arcade espacial donde 4 Cadetes de diferentes planetas luchan por la gloria suprema.
 
