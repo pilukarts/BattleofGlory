@@ -1,549 +1,460 @@
-/* ============================================
-   BATTLE OF GLORY - DISEÑO PROFESIONAL ESTILO PIROTS
-   ============================================ */
+// ============================================
+// BATTLE OF GLORY - GAME LOGIC CON BONUS DE LÍNEA
+// ============================================
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+// ============================================
+// ESTADO DEL JUEGO
+// ============================================
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    overflow: hidden;
-}
+const gameState = {
+    isPlaying: false,
+    score: 0,
+    wave: 1,
+    power: 0,
+    hp: 100,
+    grid: [],
+    selectedCell: null,
+    comboCount: 0,
+    selectedHelmet: 'red'
+};
 
-/* ============================================
-   CONTENEDOR PRINCIPAL
-   ============================================ */
+// Tipos de cascos/gemas
+const helmetTypes = ['red', 'blue', 'green', 'gold'];
 
-#game-container {
-    width: 100%;
-    max-width: 420px;
-    height: 100vh;
-    max-height: 700px;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    background: rgba(10, 10, 26, 0.98);
-    border: 2px solid #333;
-    border-radius: 12px;
-    overflow: hidden;
-}
+// ============================================
+// INICIALIZACIÓN
+// ============================================
 
-/* ============================================
-   HUD - BARRRA SUPERIOR PROFESIONAL
-   ============================================ */
+function initGame() {
+    const gridEl = document.getElementById('game-grid');
+    gridEl.innerHTML = '';
+    gameState.grid = [];
+    gameState.score = 0;
+    gameState.wave = 1;
+    gameState.power = 0;
+    gameState.hp = 100;
+    gameState.selectedCell = null;
+    gameState.comboCount = 0;
+    gameState.isPlaying = true;
+    gameState.selectedHelmet = 'red';
 
-#hud {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 12px;
-    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
-    border-bottom: 2px solid #333;
-    flex-shrink: 0;
-}
+    // Actualizar UI
+    updateUI();
+    
+    // Mostrar tablero
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('game-over').classList.remove('visible');
+    document.getElementById('game-grid').style.display = 'grid';
+    document.getElementById('helmet-selector').style.display = 'flex';
+    document.getElementById('instructions').style.display = 'block';
 
-.hud-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 60px;
-}
-
-.hud-label {
-    font-size: 8px;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 2px;
-}
-
-.hud-value {
-    font-size: 14px;
-    font-weight: bold;
-    color: #fff;
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-}
-
-/* Barras visuales */
-#power-bar-container,
-#health-bar-container {
-    width: 55px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 3px;
-}
-
-#power-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #ffd700, #ffaa00);
-    border-radius: 3px;
-    transition: width 0.3s ease;
-}
-
-#health-bar {
-    height: 100%;
-    width: 100%;
-    background: linear-gradient(90deg, #44ff44, #00cc00);
-    border-radius: 3px;
-    transition: width 0.3s ease;
-}
-
-/* ============================================
-   ÁREA DE JUEGO - TABLERO ESTILO PIROTS
-   ============================================ */
-
-#game-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    position: relative;
-}
-
-/* Selector de cascos */
-#helmet-selector {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    padding: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
-    flex-shrink: 0;
-}
-
-.helmet-btn {
-    width: 45px;
-    height: 45px;
-    border: 2px solid transparent;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.helmet-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
-}
-
-.helmet-btn.active {
-    border-color: #ffd700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-    background: rgba(255, 215, 0, 0.15);
-}
-
-.helmet-icon {
-    width: 100%;
-    height: 100%;
-}
-
-/* ============================================
-   TABLERO DE PUZZLE - 7x7 GRID
-   ============================================ */
-
-#game-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(7, 1fr);
-    gap: 3px;
-    padding: 8px;
-    background: rgba(20, 20, 40, 0.8);
-    border: 3px solid #2a2a4a;
-    border-radius: 8px;
-    width: 100%;
-    aspect-ratio: 1;
-    max-width: 350px;
-}
-
-/* Celdas del tablero */
-.grid-cell {
-    background: rgba(40, 40, 60, 0.6);
-    border-radius: 6px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    position: relative;
-    overflow: hidden;
-}
-
-.grid-cell::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
-    border-radius: 6px;
-}
-
-.grid-cell:hover {
-    background: rgba(60, 60, 80, 0.8);
-    transform: scale(0.95);
-}
-
-.grid-cell.selected {
-    background: rgba(255, 215, 0, 0.3);
-    border: 2px solid #ffd700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-    animation: cellPulse 0.5s ease-in-out infinite alternate;
-}
-
-@keyframes cellPulse {
-    from { transform: scale(0.95); }
-    to { transform: scale(1); }
-}
-
-/* ============================================
-   GEMAS - ESTILO PIROTS
-   ============================================ */
-
-.gem {
-    width: 85%;
-    height: 85%;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 18px;
-    position: relative;
-    transition: all 0.2s ease;
-    z-index: 1;
-}
-
-/* Brillo realista */
-.gem::after {
-    content: '';
-    position: absolute;
-    top: 8%;
-    left: 12%;
-    width: 35%;
-    height: 35%;
-    background: radial-gradient(circle, rgba(255,255,255,0.8), transparent);
-    border-radius: 50%;
-}
-
-.gem:active {
-    transform: scale(1.15);
-}
-
-/* Colores de gemas */
-.gem.red {
-    background: radial-gradient(circle at 30% 30%, #ff6b6b, #cc0000, #800000);
-    box-shadow: 
-        0 0 12px rgba(255, 0, 0, 0.6),
-        inset 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-.gem.blue {
-    background: radial-gradient(circle at 30% 30%, #5cdbff, #0088cc, #004466);
-    box-shadow: 
-        0 0 12px rgba(0, 136, 204, 0.6),
-        inset 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-.gem.green {
-    background: radial-gradient(circle at 30% 30%, #6bff6b, #00aa00, #005500);
-    box-shadow: 
-        0 0 12px rgba(0, 170, 0, 0.6),
-        inset 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-.gem.gold {
-    background: radial-gradient(circle at 30% 30%, #ffeb6b, #ffd700, #b8860b);
-    box-shadow: 
-        0 0 15px rgba(255, 215, 0, 0.8),
-        inset 0 0 15px rgba(255, 255, 255, 0.4);
-    animation: goldGlow 1.5s ease-in-out infinite alternate;
-}
-
-@keyframes goldGlow {
-    from { box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
-    to { box-shadow: 0 0 25px rgba(255, 215, 0, 1); }
-}
-
-/* Animación cuando hace match */
-.grid-cell.matched .gem {
-    animation: gemMatch 0.4s ease-out;
-}
-
-@keyframes gemMatch {
-    0% { transform: scale(1); }
-    30% { transform: scale(1.3); filter: brightness(1.5); }
-    60% { transform: scale(0.8); opacity: 0.6; }
-    100% { transform: scale(0); opacity: 0; }
-}
-
-/* ============================================
-   PUNTOS FLOTANTES - POPUP DE PUNTOS
-   ============================================ */
-
-.score-popup {
-    position: absolute;
-    font-size: 20px;
-    font-weight: bold;
-    color: #ffd700;
-    text-shadow: 
-        0 0 10px rgba(255, 215, 0, 0.8),
-        2px 2px 0 #000;
-    pointer-events: none;
-    animation: scoreFloat 1.5s ease-out forwards;
-    z-index: 100;
-    white-space: nowrap;
-}
-
-@keyframes scoreFloat {
-    0% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(0.5);
+    // Crear grid 7x7
+    for (let row = 0; row < 7; row++) {
+        gameState.grid[row] = [];
+        for (let col = 0; col < 7; col++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+            cell.onclick = () => handleCellClick(row, col);
+            
+            gridEl.appendChild(cell);
+            
+            gameState.grid[row][col] = {
+                element: cell,
+                type: getRandomHelmet(),
+                isMatched: false,
+                row: row,
+                col: col
+            };
+            
+            updateCellVisual(row, col);
+        }
     }
-    20% {
-        opacity: 1;
-        transform: translate(-50%, -80%) scale(1.2);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -150%) scale(1);
+    
+    // Actualizar casco seleccionado
+    updateHelmetSelection('red');
+}
+
+// ============================================
+// HELMET SELECCIÓN
+// ============================================
+
+function selectHelmet(color) {
+    gameState.selectedHelmet = color;
+    updateHelmetSelection(color);
+}
+
+function updateHelmetSelection(color) {
+    document.querySelectorAll('.helmet-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.color === color) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+// ============================================
+// OBTENER HELMET ALEATORIO
+// ============================================
+
+function getRandomHelmet() {
+    // 40% probabilidad de cada color, excepto gold que es menos común
+    const rand = Math.random();
+    if (rand < 0.15) return 'gold'; // 15% gold
+    if (rand < 0.40) return 'red';  // 25% red
+    if (rand < 0.70) return 'blue'; // 30% blue
+    return 'green';                 // 30% green
+}
+
+// ============================================
+// ACTUALIZAR VISUAL DE CELDA
+// ============================================
+
+function updateCellVisual(row, col) {
+    const cellData = gameState.grid[row][col];
+    const cell = cellData.element;
+    const type = cellData.type;
+    
+    cell.innerHTML = `<div class="gem ${type}">${getHelmetEmoji(type)}</div>`;
+    
+    if (cellData.isMatched) {
+        cell.querySelector('.gem').classList.add('matched');
     }
 }
 
-/* Combo display */
-.combo-display {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 36px;
-    font-weight: bold;
-    color: #fff;
-    text-shadow: 
-        0 0 20px rgba(255, 255, 255, 0.8),
-        0 0 40px rgba(255, 215, 0, 0.6);
-    animation: comboAppear 0.5s ease-out forwards;
-    pointer-events: none;
-    z-index: 100;
+function getHelmetEmoji(type) {
+    const emojis = {
+        'red': '🔥',
+        'blue': '❄️',
+        'green': '🐍',
+        'gold': '⭐'
+    };
+    return emojis[type] || '';
 }
 
-@keyframes comboAppear {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5) rotate(-10deg);
+// ============================================
+// MANEJO DE CLICKS
+// ============================================
+
+function handleCellClick(row, col) {
+    if (!gameState.isPlaying) return;
+
+    const clickedCell = gameState.grid[row][col];
+
+    if (gameState.selectedCell === null) {
+        // Primera selección
+        gameState.selectedCell = { row, col };
+        clickedCell.element.classList.add('selected');
+    } else {
+        // Segunda selección
+        const first = gameState.selectedCell;
+        clickedCell.element.classList.remove('selected');
+        first.element.classList.remove('selected');
+        
+        if (isAdjacent(first, { row, col })) {
+            swapHelmets(first, { row, col });
+        }
+        
+        gameState.selectedCell = null;
     }
-    50% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.2) rotate(5deg);
+}
+
+function isAdjacent(cell1, cell2) {
+    const rowDiff = Math.abs(cell1.row - cell2.row);
+    const colDiff = Math.abs(cell1.col - cell2.col);
+    return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+}
+
+function swapHelmets(cell1, cell2) {
+    const type1 = gameState.grid[cell1.row][cell1.col].type;
+    const type2 = gameState.grid[cell2.row][cell2.col].type;
+    
+    gameState.grid[cell1.row][cell1.col].type = type2;
+    gameState.grid[cell2.row][cell2.col].type = type1;
+    
+    updateCellVisual(cell1.row, cell1.col);
+    updateCellVisual(cell2.row, cell2.col);
+    
+    // Verificar matches después del intercambio
+    setTimeout(() => {
+        checkMatches();
+    }, 200);
+}
+
+// ============================================
+// VERIFICAR MATCHES
+// ============================================
+
+function checkMatches() {
+    let matches = [];
+    
+    // Buscar matches horizontales (3+ seguidos)
+    for (let row = 0; row < 7; row++) {
+        for (let col = 0; col < 5; col++) {
+            const type = gameState.grid[row][col].type;
+            if (type === gameState.grid[row][col + 1].type &&
+                type === gameState.grid[row][col + 2].type) {
+                
+                // Encontró inicio de match horizontal
+                let matchLen = 3;
+                while (col + matchLen < 7 && 
+                       gameState.grid[row][col + matchLen].type === type) {
+                    matchLen++;
+                }
+                
+                // Agregar todas las celdas del match
+                for (let i = 0; i < matchLen; i++) {
+                    matches.push({ row, col: col + i });
+                }
+            }
+        }
     }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(1.5) rotate(0deg);
+    
+    // Buscar matches verticales (3+ seguidos)
+    for (let col = 0; col < 7; col++) {
+        for (let row = 0; row < 5; row++) {
+            const type = gameState.grid[row][col].type;
+            if (type === gameState.grid[row + 1][col].type &&
+                type === gameState.grid[row + 2][col].type) {
+                
+                // Encontró inicio de match vertical
+                let matchLen = 3;
+                while (row + matchLen < 7 && 
+                       gameState.grid[row + matchLen][col].type === type) {
+                    matchLen++;
+                }
+                
+                // Agregar todas las celdas del match
+                for (let i = 0; i < matchLen; i++) {
+                    matches.push({ row: row + i, col });
+                }
+            }
+        }
+    }
+    
+    // Eliminar duplicados
+    matches = matches.filter((pos, index, self) => 
+        index === self.findIndex((p) => p.row === pos.row && p.col === pos.col)
+    );
+    
+    if (matches.length > 0) {
+        // Calcular puntos
+        const basePoints = matches.length * 10;
+        const comboBonus = gameState.comboCount * 5;
+        const pointsEarned = basePoints + comboBonus;
+        
+        gameState.score += pointsEarned;
+        gameState.power = Math.min(100, gameState.power + matches.length);
+        
+        // MOSTRAR PUNTOS FLOTANTES
+        showFloatingPoints(pointsEarned, matches[0]);
+        
+        // MOSTRAR COMBO SI APLICA
+        if (gameState.comboCount > 1) {
+            showCombo(gameState.comboCount);
+        }
+        
+        // Animación de match
+        matches.forEach(pos => {
+            gameState.grid[pos.row][pos.col].isMatched = true;
+        });
+        
+        // Verificar línea completa (BONUS ÉPICO)
+        const lineBonus = checkLineComplete();
+        
+        if (lineBonus > 0) {
+            setTimeout(() => {
+                showLineBonus(lineBonus);
+            }, 300);
+        }
+        
+        // Remover matched y rellenar
+        setTimeout(() => {
+            matches.forEach(pos => {
+                gameState.grid[pos.row][pos.col].type = getRandomHelmet();
+                gameState.grid[pos.row][pos.col].isMatched = false;
+                updateCellVisual(pos.row, pos.col);
+            });
+            
+            gameState.comboCount = 0;
+            updateUI();
+        }, 400);
+    } else {
+        gameState.comboCount = 0;
     }
 }
 
-/* ============================================
-   INSTRUCCIONES
-   ============================================ */
+// ============================================
+// CHECK LÍNEA COMPLETA - BONUS ÉPICO
+// ============================================
 
-#instructions {
-    padding: 8px 15px;
-    background: rgba(0, 0, 0, 0.3);
-    font-size: 9px;
-    color: #888;
-    text-align: center;
-    flex-shrink: 0;
+function checkLineComplete() {
+    let lineBonus = 0;
+    
+    // Verificar cada fila
+    for (let row = 0; row < 7; row++) {
+        const firstType = gameState.grid[row][0].type;
+        if (firstType && gameState.grid[row].every(cell => cell.type === firstType)) {
+            // ¡Fila completa!
+            lineBonus += 100;
+            highlightLine('row', row);
+        }
+    }
+    
+    // Verificar cada columna
+    for (let col = 0; col < 7; col++) {
+        const firstType = gameState.grid[0][col].type;
+        if (firstType && gameState.grid.every(row => row[col].type === firstType)) {
+            // ¡Columna completa!
+            lineBonus += 100;
+            highlightLine('col', col);
+        }
+    }
+    
+    if (lineBonus > 0) {
+        gameState.score += lineBonus;
+        gameState.power = Math.min(100, gameState.power + 20);
+    }
+    
+    return lineBonus;
 }
 
-#instructions p {
-    margin: 2px 0;
+function highlightLine(type, index) {
+    for (let i = 0; i < 7; i++) {
+        const pos = type === 'row' ? { row: index, col: i } : { row: i, col: index };
+        const cell = gameState.grid[pos.row][pos.col].element;
+        cell.style.animation = 'none';
+        cell.offsetHeight; // Trigger reflow
+        cell.style.animation = 'lineComplete 0.5s ease';
+    }
 }
 
-/* ============================================
-   PANTALLA DE INICIO - ANIMADA
-   ============================================ */
+// Añadir al CSS:
+/*
+@keyframes lineComplete {
+    0% { background: rgba(255, 255, 255, 0.5); transform: scale(1); }
+    50% { background: rgba(255, 215, 0, 0.8); transform: scale(1.1); }
+    100% { background: rgba(255, 255, 255, 0.5); transform: scale(1); }
+}
+*/
 
-#start-screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 200;
-    text-align: center;
-    padding: 20px;
-    transition: opacity 0.5s ease, transform 0.5s ease;
+// ============================================
+// MOSTRAR PUNTOS FLOTANTES
+// ============================================
+
+function showFloatingPoints(points, position) {
+    const gameArea = document.getElementById('game-area');
+    
+    const popup = document.createElement('div');
+    popup.className = 'score-popup';
+    popup.textContent = `+${points}`;
+    
+    // Obtener posición de la celda
+    const cell = gameState.grid[position.row][position.col].element;
+    const rect = cell.getBoundingClientRect();
+    const areaRect = gameArea.getBoundingClientRect();
+    
+    popup.style.left = `${rect.left - areaRect.left + rect.width / 2}px`;
+    popup.style.top = `${rect.top - areaRect.top + rect.height / 2}px`;
+    
+    gameArea.appendChild(popup);
+    
+    // Remover después de animación
+    setTimeout(() => popup.remove(), 1500);
 }
 
-#start-screen.hidden {
-    opacity: 0;
-    transform: scale(1.1);
-    pointer-events: none;
+// ============================================
+// MOSTRAR COMBO
+// ============================================
+
+function showCombo(count) {
+    const gameArea = document.getElementById('game-area');
+    
+    const combo = document.createElement('div');
+    combo.className = 'combo-display';
+    combo.textContent = `${count}x COMBO!`;
+    
+    gameArea.appendChild(combo);
+    
+    setTimeout(() => combo.remove(), 1500);
 }
 
-#start-screen h1 {
-    font-size: 26px;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    background: linear-gradient(90deg, #ff4444, #4488ff, #44ff44, #ffaa00);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: titleShimmer 3s ease-in-out infinite;
+// ============================================
+// MOSTRAR BONUS DE LÍNEA
+// ============================================
+
+function showLineBonus(points) {
+    const gameArea = document.getElementById('game-area');
+    
+    const bonus = document.createElement('div');
+    bonus.className = 'score-popup';
+    bonus.style.fontSize = '28px';
+    bonus.style.color = '#ffd700';
+    bonus.style.textShadow = '0 0 20px #ffd700, 3px 3px 0 #000';
+    bonus.textContent = `LINE BONUS! +${points}`;
+    
+    bonus.style.left = '50%';
+    bonus.style.top = '40%';
+    bonus.style.transform = 'translate(-50%, -50%)';
+    
+    gameArea.appendChild(bonus);
+    
+    setTimeout(() => bonus.remove(), 2000);
 }
 
-@keyframes titleShimmer {
-    0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3)); }
-    50% { filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.6)); }
+// ============================================
+// ACTUALIZAR UI
+// ============================================
+
+function updateUI() {
+    document.getElementById('score').textContent = gameState.score;
+    document.getElementById('wave').textContent = gameState.wave;
+    document.getElementById('power-text').textContent = `${gameState.power}%`;
+    document.getElementById('power-bar').style.width = `${gameState.power}%`;
+    document.getElementById('health-text').textContent = gameState.hp;
+    document.getElementById('health-bar').style.width = `${gameState.hp}%`;
 }
 
-#start-screen p {
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 25px;
+// ============================================
+// CONTROLES DEL JUEGO
+// ============================================
+
+function startGame() {
+    initGame();
 }
 
-/* Preview de cascos */
-.helmet-preview {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 35px;
+function restartGame() {
+    initGame();
 }
 
-.preview-icon {
-    width: 45px;
-    height: 45px;
-    animation: float 2s ease-in-out infinite;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+function gameOver() {
+    gameState.isPlaying = false;
+    document.getElementById('final-score').textContent = gameState.score;
+    document.getElementById('final-wave').textContent = gameState.wave;
+    document.getElementById('game-over').classList.add('visible');
 }
 
-.preview-icon:nth-child(1) { animation-delay: 0s; }
-.preview-icon:nth-child(2) { animation-delay: 0.25s; }
-.preview-icon:nth-child(3) { animation-delay: 0.5s; }
-.preview-icon:nth-child(4) { animation-delay: 0.75s; }
+// ============================================
+// EVENTOS AL CARGAR
+// ============================================
 
-@keyframes float {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-10px) scale(1.1); }
-}
-
-/* Botón de inicio */
-#start-btn {
-    padding: 14px 45px;
-    font-size: 15px;
-    font-weight: bold;
-    color: #fff;
-    background: linear-gradient(135deg, #44aa44 0%, #228822 100%);
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    box-shadow: 0 4px 20px rgba(68, 170, 68, 0.4);
-}
-
-#start-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 30px rgba(68, 170, 68, 0.6);
-}
-
-/* ============================================
-   PANTALLA DE GAME OVER - MODAL
-   ============================================ */
-
-#game-over {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 200;
-    text-align: center;
-    padding: 20px;
-}
-
-#game-over.visible {
-    display: flex;
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-#game-over h2 {
-    font-size: 32px;
-    color: #ff4444;
-    margin-bottom: 20px;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    animation: gameOverPulse 1s ease-in-out infinite alternate;
-}
-
-@keyframes gameOverPulse {
-    from { text-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
-    to { text-shadow: 0 0 30px rgba(255, 68, 68, 0.8); }
-}
-
-#game-over p {
-    font-size: 14px;
-    color: #aaa;
-    margin: 5px 0;
-}
-
-#game-over .final-score {
-    font-size: 28px;
-    color: #ffd700;
-    font-weight: bold;
-    margin: 15px 0;
-}
-
-#restart-btn {
-    margin-top: 25px;
-    padding: 12px 35px;
-    font-size: 14px;
-    font-weight: bold;
-    color: #fff;
-    background: linear-gradient(135deg, #ff6644 0%, #cc4422 100%);
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-}
-
-#restart-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 25px rgba(255, 102, 68, 0.6);
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Botón start
+    document.getElementById('start-btn').onclick = startGame;
+    
+    // Botón restart
+    document.getElementById('restart-btn').onclick = restartGame;
+    
+    // Controles de teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !gameState.isPlaying) {
+            startGame();
+        }
+        if ((e.key === 'r' || e.key === 'R') && !gameState.isPlaying) {
+            restartGame();
+        }
+    });
+    
+    console.log('Battle of Glory loaded successfully!');
+});
