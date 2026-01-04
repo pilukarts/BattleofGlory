@@ -2,14 +2,15 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Battle of Glory</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 <body>
     <div id="game-container">
-        <header id="hud">
+        <!-- HUD -->
+        <div id="hud">
             <div class="hud-section">
                 <span class="hud-label">SCORE</span>
                 <span id="score" class="hud-value">0</span>
@@ -18,7 +19,7 @@
                 <span class="hud-label">WAVE</span>
                 <span id="wave" class="hud-value">1</span>
             </div>
-            <div class="hud-section power-section">
+            <div class="hud-section">
                 <span class="hud-label">POWER</span>
                 <div id="power-bar-container">
                     <div id="power-bar"></div>
@@ -32,92 +33,74 @@
                 </div>
                 <span id="health-text" class="hud-value">100</span>
             </div>
-        </header>
-
-        <div id="game-grid"></div>
-
-        <div id="helmet-selector">
-            <button class="helmet-btn active" data-color="red" onclick="selectHelmet('red')">
-                <svg viewBox="0 0 60 60" class="helmet-icon">
-                    <defs>
-                        <linearGradient id="ir" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#ff4444"/>
-                            <stop offset="50%" style="stop-color:#cc0000"/>
-                            <stop offset="100%" style="stop-color:#880000"/>
-                        </linearGradient>
-                    </defs>
-                    <path d="M30 5 L50 15 L55 35 L48 52 L42 55 L18 55 L12 52 L5 35 L10 15 Z" fill="url(#ir)" stroke="#550000" stroke-width="2"/>
-                    <polygon points="18,28 26,25 30,35 26,45 18,45 14,35" fill="#ff2200"/>
-                    <polygon points="34,28 42,25 46,35 42,45 34,45 30,35" fill="#ff2200"/>
-                    <line x1="30" y1="25" x2="30" y2="50" stroke="#550000" stroke-width="2"/>
-                    <text x="30" y="18" text-anchor="middle" font-size="8" font-weight="bold" fill="#ff6666">PB</text>
-                </svg>
-            </button>
-            <button class="helmet-btn" data-color="blue" onclick="selectHelmet('blue')">
-                <svg viewBox="0 0 60 60" class="helmet-icon">
-                    <defs>
-                        <linearGradient id="ib" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#00d4ff"/>
-                            <stop offset="50%" style="stop-color:#0088cc"/>
-                            <stop offset="100%" style="stop-color:#004466"/>
-                        </linearGradient>
-                    </defs>
-                    <ellipse cx="30" cy="28" rx="24" ry="24" fill="url(#ib)" stroke="#003355" stroke-width="2"/>
-                    <polygon points="22,20 30,15 38,20 38,30 30,35 22,30" fill="#00ffff"/>
-                    <polygon points="26,32 30,28 34,32 34,38 30,42 26,38" fill="#0088ff" opacity="0.8"/>
-                    <text x="30" y="48" text-anchor="middle" font-size="8" font-weight="bold" fill="#00ffff">PB</text>
-                </svg>
-            </button>
-            <button class="helmet-btn" data-color="green" onclick="selectHelmet('green')">
-                <svg viewBox="0 0 60 60" class="helmet-icon">
-                    <defs>
-                        <linearGradient id="ig" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#44ff44"/>
-                            <stop offset="50%" style="stop-color:#00aa00"/>
-                            <stop offset="100%" style="stop-color:#005500"/>
-                        </linearGradient>
-                    </defs>
-                    <path d="M30 5 L48 20 L52 35 L45 50 L35 55 L25 55 L15 50 L8 35 L12 20 Z" fill="url(#ig)" stroke="#003300" stroke-width="2"/>
-                    <ellipse cx="22" cy="26" rx="6" ry="4" fill="#00ff00"/>
-                    <ellipse cx="38" cy="26" rx="6" ry="4" fill="#00ff00"/>
-                    <ellipse cx="22" cy="26" rx="3" ry="2" fill="#ccffcc"/>
-                    <ellipse cx="38" cy="26" rx="3" ry="2" fill="#ccffcc"/>
-                    <text x="30" y="45" text-anchor="middle" font-size="7" font-weight="bold" fill="#44ff44">PB</text>
-                </svg>
-            </button>
-            <button class="helmet-btn gold-btn" data-color="gold" onclick="selectHelmet('gold')">
-                <svg viewBox="0 0 60 60" class="helmet-icon">
-                    <defs>
-                        <radialGradient id="ic" cx="50%" cy="40%" r="60%">
-                            <stop offset="0%" style="stop-color:#ffffff"/>
-                            <stop offset="30%" style="stop-color:#ffd700"/>
-                            <stop offset="100%" style="stop-color:#b8860b"/>
-                        </radialGradient>
-                    </defs>
-                    <ellipse cx="30" cy="32" rx="25" ry="26" fill="url(#ic)" stroke="#8B7500" stroke-width="2"/>
-                    <ellipse cx="30" cy="25" rx="16" ry="10" fill="none" stroke="#fff" stroke-width="2" opacity="0.8"/>
-                    <circle cx="30" cy="32" r="14" fill="#1a1a00" stroke="#ffd700" stroke-width="2"/>
-                    <circle cx="30" cy="32" r="10" fill="#ffd700" opacity="0.9"/>
-                    <circle cx="30" cy="32" r="6" fill="#fff"/>
-                    <text x="30" y="12" text-anchor="middle" font-size="9" font-weight="bold" fill="#ffd700">PB</text>
-                </svg>
-            </button>
         </div>
 
+        <!-- Área de juego -->
+        <div id="game-area">
+            <!-- Selector de cascos -->
+            <div id="helmet-selector">
+                <button class="helmet-btn active" data-color="red" onclick="selectHelmet('red')">
+                    <svg viewBox="0 0 60 60" class="helmet-icon">
+                        <defs>
+                            <linearGradient id="ir" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#ff4444"/>
+                                <stop offset="100%" style="stop-color:#880000"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M30 5 L50 15 L55 35 L48 52 L42 55 L18 55 L12 52 L5 35 L10 15 Z" fill="url(#ir)" stroke="#550000" stroke-width="2"/>
+                        <polygon points="18,28 26,25 30,35 26,45 18,45 14,35" fill="#ff2200"/>
+                        <polygon points="34,28 42,25 46,35 42,45 34,45 30,35" fill="#ff2200"/>
+                    </svg>
+                </button>
+                <button class="helmet-btn" data-color="blue" onclick="selectHelmet('blue')">
+                    <svg viewBox="0 0 60 60" class="helmet-icon">
+                        <defs>
+                            <linearGradient id="ib" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00d4ff"/>
+                                <stop offset="100%" style="stop-color:#004466"/>
+                            </linearGradient>
+                        </defs>
+                        <ellipse cx="30" cy="28" rx="24" ry="24" fill="url(#ib)" stroke="#003355" stroke-width="2"/>
+                        <polygon points="22,20 30,15 38,20 38,30 30,35 22,30" fill="#00ffff"/>
+                    </svg>
+                </button>
+                <button class="helmet-btn" data-color="green" onclick="selectHelmet('green')">
+                    <svg viewBox="0 0 60 60" class="helmet-icon">
+                        <defs>
+                            <linearGradient id="ig" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#44ff44"/>
+                                <stop offset="100%" style="stop-color:#005500"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M30 5 L48 20 L52 35 L45 50 L35 55 L25 55 L15 50 L8 35 L12 20 Z" fill="url(#ig)" stroke="#003300" stroke-width="2"/>
+                        <ellipse cx="22" cy="26" rx="6" ry="4" fill="#00ff00"/>
+                        <ellipse cx="38" cy="26" rx="6" ry="4" fill="#00ff00"/>
+                    </svg>
+                </button>
+                <button class="helmet-btn gold-btn" data-color="gold" onclick="selectHelmet('gold')">
+                    <svg viewBox="0 0 60 60" class="helmet-icon">
+                        <defs>
+                            <radialGradient id="ic" cx="50%" cy="40%" r="60%">
+                                <stop offset="0%" style="stop-color:#ffffff"/>
+                                <stop offset="100%" style="stop-color:#b8860b"/>
+                            </radialGradient>
+                        </defs>
+                        <ellipse cx="30" cy="32" rx="25" ry="26" fill="url(#ic)" stroke="#8B7500" stroke-width="2"/>
+                        <circle cx="30" cy="32" r="14" fill="#1a1a00" stroke="#ffd700" stroke-width="2"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Grid de juego -->
+            <div id="game-grid"></div>
+        </div>
+
+        <!-- Instrucciones -->
         <div id="instructions">
-            <p>INFERNO: Red gems + Blast</p>
-            <p>GLACIER: Blue gems + Freeze</p>
-            <p>VIPER: Green gems + Scan</p>
-            <p>CELESTIAL: ALL gems + ULTIMATE!</p>
+            <p>🔥 INFERNO: Red gems + Blast | ❄️ GLACIER: Blue gems + Freeze | 🐍 VIPER: Green gems + Scan | ⭐ CELESTIAL: ALL gems + ULTIMATE!</p>
         </div>
 
-        <div id="game-over" class="hidden">
-            <h2>GAME OVER</h2>
-            <p>Final Score: <span id="final-score">0</span></p>
-            <p>Wave Reached: <span id="final-wave">1</span></p>
-            <button id="restart-btn" onclick="restartGame()">PLAY AGAIN</button>
-        </div>
-
+        <!-- Pantalla de inicio -->
         <div id="start-screen">
             <h1>BATTLE OF GLORY</h1>
             <p>Collect gems, defeat enemies, conquer the galaxy!</p>
@@ -138,12 +121,20 @@
                 <svg viewBox="0 0 60 60" class="preview-icon">
                     <ellipse cx="30" cy="32" rx="25" ry="26" fill="#ffd700"/>
                     <circle cx="30" cy="32" r="10" fill="#ffd700"/>
-                    <circle cx="30" cy="32" r="5" fill="#fff"/>
                 </svg>
             </div>
             <button id="start-btn" onclick="startGame()">START BATTLE</button>
         </div>
+
+        <!-- Game Over -->
+        <div id="game-over">
+            <h2>GAME OVER</h2>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <p>Wave Reached: <span id="final-wave">1</span></p>
+            <button id="restart-btn" onclick="restartGame()">PLAY AGAIN</button>
+        </div>
     </div>
+
     <script src="game.js"></script>
 </body>
 </html>
