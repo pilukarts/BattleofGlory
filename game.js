@@ -2,7 +2,7 @@
 // Minimum Viable Product (MVP) v1.0
 
 // ============================================
-// INICIALIZACIÓN DEL JUEGO
+// ESTADO DEL JUEGO
 // ============================================
 
 const gameState = {
@@ -16,16 +16,43 @@ const gameState = {
     comboCount: 0
 };
 
-const cadets = {
-    inferno: { name: 'Inferno', color: '#ff4444', symbol: '🔥' },
-    glacier: { name: 'Glacier', color: '#4488ff', symbol: '❄️' },
-    viper: { name: 'Viper', color: '#44ff44', symbol: '🐍' },
-    celestial: { name: 'Celestial', color: '#ffaa00', symbol: '⭐' }
-};
+const gemTypes = ['red', 'blue', 'green', 'gold'];
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Event listeners para botones
+    document.getElementById('start-btn').addEventListener('click', startGame);
+    document.getElementById('restart-btn').addEventListener('click', restartGame);
+    
+    // Keyboard controls
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !gameState.isPlaying) {
+            startGame();
+        }
+        if (e.key === 'r' || e.key === 'R') {
+            restartGame();
+        }
+    });
+    
+    console.log('Battle of Glory loaded successfully!');
+});
 
 // ============================================
 // FUNCIONES DEL JUEGO
 // ============================================
+
+function startGame() {
+    // Ocultar pantalla de inicio con transición suave
+    document.getElementById('start-screen').classList.remove('active');
+    
+    // Inicializar juego después de la transición
+    setTimeout(function() {
+        initGame();
+    }, 300);
+}
 
 function initGame() {
     const grid = document.getElementById('game-grid');
@@ -39,7 +66,8 @@ function initGame() {
     gameState.comboCount = 0;
     gameState.isPlaying = true;
 
-    for (let row = 0; row < 8; row++) {
+    // Crear grid 7x7
+    for (let row = 0; row < 7; row++) {
         gameState.grid[row] = [];
         for (let col = 0; col < 7; col++) {
             const cell = document.createElement('div');
@@ -60,24 +88,21 @@ function initGame() {
         }
     }
 
+    // Mostrar grid con animación
+    grid.classList.add('active');
+    
     updateUI();
 }
 
 function getRandomType() {
-    const types = ['inferno', 'glacier', 'viper', 'celestial'];
-    return types[Math.floor(Math.random() * types.length)];
+    return gemTypes[Math.floor(Math.random() * gemTypes.length)];
 }
 
 function updateCellVisual(row, col) {
     const cellData = gameState.grid[row][col];
     const cell = cellData.element;
-    const cadet = cadets[cellData.type];
     
-    cell.innerHTML = '<div class="cadet ' + cellData.type + '"><span class="cadet-symbol">' + cadet.symbol + '</span></div>';
-    
-    if (cellData.isMatched) {
-        cell.querySelector('.cadet').classList.add('matched');
-    }
+    cell.innerHTML = '<div class="gem ' + cellData.type + '"></div>';
 }
 
 function handleCellClick(row, col) {
@@ -86,9 +111,11 @@ function handleCellClick(row, col) {
     const clickedCell = gameState.grid[row][col];
 
     if (gameState.selectedCell === null) {
+        // Primera selección
         gameState.selectedCell = { row, col };
         clickedCell.element.classList.add('selected');
     } else {
+        // Segunda selección
         const first = gameState.selectedCell;
         clickedCell.element.classList.remove('selected');
         first.element.classList.remove('selected');
@@ -125,7 +152,8 @@ function swapCells(cell1, cell2) {
 function checkMatches() {
     let matches = [];
     
-    for (let row = 0; row < 8; row++) {
+    // Horizontal
+    for (let row = 0; row < 7; row++) {
         for (let col = 0; col < 5; col++) {
             const type = gameState.grid[row][col].type;
             if (type === gameState.grid[row][col + 1].type &&
@@ -137,7 +165,8 @@ function checkMatches() {
         }
     }
     
-    for (let row = 0; row < 6; row++) {
+    // Vertical
+    for (let row = 0; row < 5; row++) {
         for (let col = 0; col < 7; col++) {
             const type = gameState.grid[row][col].type;
             if (type === gameState.grid[row + 1][col].type &&
@@ -157,25 +186,25 @@ function checkMatches() {
 function processMatches(matches) {
     gameState.comboCount++;
     
+    // Calcular puntos
     const basePoints = 10;
     const comboBonus = gameState.comboCount * 5;
     const points = matches.length * (basePoints + comboBonus);
     gameState.score += points;
     gameState.power = Math.min(100, gameState.power + matches.length * 2);
     
-    matches.forEach(function(pos) {
-        gameState.grid[pos.row][pos.col].isMatched = true;
-    });
+    // Mostrar popup de puntuación
+    showScorePopup(points);
     
+    // Animar matches
     matches.forEach(function(pos) {
-        const cell = gameState.grid[pos.row][pos.col].element;
-        cell.classList.add('collecting');
+        gameState.grid[pos.row][pos.col].element.classList.add('matched');
     });
     
     setTimeout(function() {
         matches.forEach(function(pos) {
             gameState.grid[pos.row][pos.col].type = getRandomType();
-            gameState.grid[pos.row][pos.col].isMatched = false;
+            gameState.grid[pos.row][pos.col].element.classList.remove('matched');
             updateCellVisual(pos.row, pos.col);
         });
         gameState.comboCount = 0;
@@ -183,47 +212,40 @@ function processMatches(matches) {
     }, 300);
 }
 
+function showScorePopup(points) {
+    const popup = document.getElementById('score-popup');
+    popup.textContent = '+' + points;
+    popup.classList.remove('show');
+    
+    // Trigger reflow para reiniciar animación
+    void popup.offsetWidth;
+    
+    popup.classList.add('show');
+}
+
 function updateUI() {
     document.getElementById('score').textContent = gameState.score;
     document.getElementById('wave').textContent = gameState.wave;
     document.getElementById('power').textContent = gameState.power + '%';
     document.getElementById('hp').textContent = gameState.hp;
+    
+    document.getElementById('power-bar').style.width = gameState.power + '%';
+    document.getElementById('health-bar').style.width = gameState.hp + '%';
 }
 
-function startGame() {
-    initGame();
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('game-over-screen').style.display = 'none';
+function showGameOver() {
+    gameState.isPlaying = false;
+    document.getElementById('game-grid').classList.remove('active');
+    
+    document.getElementById('final-score').textContent = gameState.score;
+    document.getElementById('final-wave').textContent = gameState.wave;
+    
+    setTimeout(function() {
+        document.getElementById('game-over-screen').classList.add('active');
+    }, 300);
 }
 
 function restartGame() {
+    document.getElementById('game-over-screen').classList.remove('active');
     startGame();
 }
-
-// ============================================
-// EVENTOS
-// ============================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    const startBtn = document.getElementById('start-btn');
-    const restartBtn = document.getElementById('restart-btn');
-    
-    if (startBtn) {
-        startBtn.addEventListener('click', startGame);
-    }
-    
-    if (restartBtn) {
-        restartBtn.addEventListener('click', restartGame);
-    }
-    
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !gameState.isPlaying) {
-            startGame();
-        }
-        if (e.key === 'r' || e.key === 'R') {
-            restartGame();
-        }
-    });
-    
-    console.log('Battle of Glory loaded successfully!');
-});
