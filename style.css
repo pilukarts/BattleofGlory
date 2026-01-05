@@ -1,460 +1,578 @@
-// ============================================
-// BATTLE OF GLORY - GAME LOGIC CON BONUS DE LÍNEA
-// ============================================
+/* ============================================
+   BATTLE OF GLORY - SLOT MACHINE STYLES
+   ============================================ */
 
-// ============================================
-// ESTADO DEL JUEGO
-// ============================================
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-const gameState = {
-    isPlaying: false,
-    score: 0,
-    wave: 1,
-    power: 0,
-    hp: 100,
-    grid: [],
-    selectedCell: null,
-    comboCount: 0,
-    selectedHelmet: 'red'
-};
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0a0a1a 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    overflow: hidden;
+}
 
-// Tipos de cascos/gemas
-const helmetTypes = ['red', 'blue', 'green', 'gold'];
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
 
-// ============================================
-// INICIALIZACIÓN
-// ============================================
+#game-container {
+    width: 100%;
+    max-width: 450px;
+    height: 100vh;
+    max-height: 750px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: rgba(10, 10, 26, 0.98);
+    border: 2px solid #333;
+    border-radius: 12px;
+    overflow: hidden;
+}
 
-function initGame() {
-    const gridEl = document.getElementById('game-grid');
-    gridEl.innerHTML = '';
-    gameState.grid = [];
-    gameState.score = 0;
-    gameState.wave = 1;
-    gameState.power = 0;
-    gameState.hp = 100;
-    gameState.selectedCell = null;
-    gameState.comboCount = 0;
-    gameState.isPlaying = true;
-    gameState.selectedHelmet = 'red';
+/* ============================================
+   HEADER - VIDAS Y PROGRESS
+   ============================================ */
 
-    // Actualizar UI
-    updateUI();
-    
-    // Mostrar tablero
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('game-over').classList.remove('visible');
-    document.getElementById('game-grid').style.display = 'grid';
-    document.getElementById('helmet-selector').style.display = 'flex';
-    document.getElementById('instructions').style.display = 'block';
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+    border-bottom: 2px solid #333;
+    flex-shrink: 0;
+}
 
-    // Crear grid 7x7
-    for (let row = 0; row < 7; row++) {
-        gameState.grid[row] = [];
-        for (let col = 0; col < 7; col++) {
-            const cell = document.createElement('div');
-            cell.className = 'grid-cell';
-            cell.dataset.row = row;
-            cell.dataset.col = col;
-            cell.onclick = () => handleCellClick(row, col);
-            
-            gridEl.appendChild(cell);
-            
-            gameState.grid[row][col] = {
-                element: cell,
-                type: getRandomHelmet(),
-                isMatched: false,
-                row: row,
-                col: col
-            };
-            
-            updateCellVisual(row, col);
-        }
+/* Calaveras */
+#lives-container {
+    display: flex;
+    gap: 8px;
+}
+
+.skull {
+    font-size: 24px;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+    transition: all 0.3s ease;
+}
+
+.skull.lost {
+    opacity: 0.2;
+    filter: grayscale(100%);
+}
+
+.skull.active {
+    animation: skullPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skullPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Progress Bar */
+#progress-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+#progress-bar {
+    width: 100px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffd700, #ffaa00);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+#progress-text {
+    font-size: 10px;
+    color: #ffd700;
+    font-weight: bold;
+}
+
+/* ============================================
+   SLOT AREA
+   ============================================ */
+
+#slot-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    position: relative;
+}
+
+/* Cofre de Bonus */
+#chest-container {
+    margin-bottom: 15px;
+}
+
+#chest {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #8B4513 0%, #654321 100%);
+    border: 3px solid #ffd700;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+#chest:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+}
+
+#chest.open {
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+    animation: chestShake 0.5s ease;
+}
+
+@keyframes chestShake {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+}
+
+#chest-icon {
+    font-size: 32px;
+}
+
+#chest-label {
+    font-size: 10px;
+    color: #fff;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* ============================================
+   SLOT MACHINE - 4 COLUMNAS
+   ============================================ */
+
+#slots-container {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+    border: 2px solid #333;
+}
+
+.slot-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.column-header {
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 3px;
+}
+
+.red-column .column-header {
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    color: #fff;
+}
+
+.blue-column .column-header {
+    background: linear-gradient(135deg, #4488ff, #0044aa);
+    color: #fff;
+}
+
+.green-column .column-header {
+    background: linear-gradient(135deg, #44ff44, #00aa00);
+    color: #fff;
+}
+
+.gold-column .column-header {
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    color: #000;
+}
+
+/* Reels */
+.slot-reel {
+    width: 60px;
+    height: 180px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%);
+    border: 2px solid #444;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 5px;
+    overflow: hidden;
+    position: relative;
+}
+
+.slot-reel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.8), transparent);
+    z-index: 5;
+}
+
+.slot-reel::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8), transparent);
+    z-index: 5;
+}
+
+/* Gemas en el reel */
+.slot-gem {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin: 2px 0;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.slot-gem.red {
+    background: linear-gradient(135deg, #ff6666, #cc0000);
+    border: 2px solid #ff0000;
+    color: #fff;
+}
+
+.slot-gem.blue {
+    background: linear-gradient(135deg, #66bbff, #0066cc);
+    border: 2px solid #0088ff;
+    color: #fff;
+}
+
+.slot-gem.green {
+    background: linear-gradient(135deg, #66ff66, #00aa00);
+    border: 2px solid #00ff00;
+    color: #fff;
+}
+
+.slot-gem.gold {
+    background: linear-gradient(135deg, #ffdd44, #ffaa00);
+    border: 2px solid #ffd700;
+    color: #000;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.slot-gem.special {
+    animation: gemGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes gemGlow {
+    from { box-shadow: 0 0 5px currentColor; }
+    to { box-shadow: 0 0 15px currentColor; }
+}
+
+.column-value {
+    font-size: 11px;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+/* ============================================
+   INFO PANEL
+   ============================================ */
+
+#info-panel {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid #333;
+    flex-shrink: 0;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.info-label {
+    font-size: 9px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.info-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* ============================================
+   SLOT BUTTON
+   ============================================ */
+
+#slot-button-container {
+    padding: 15px;
+    flex-shrink: 0;
+}
+
+#slot-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #44aa44 0%, #228822 100%);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(68, 170, 68, 0.4);
+}
+
+#slot-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 25px rgba(68, 170, 68, 0.6);
+}
+
+#slot-btn:active {
+    transform: scale(0.98);
+}
+
+#slot-btn:disabled {
+    background: #444;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-icon {
+    font-size: 24px;
+}
+
+.btn-text {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+/* ============================================
+   PANTALLA DE INICIO
+   ============================================ */
+
+#start-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 100;
+    text-align: center;
+    padding: 20px;
+}
+
+#start-screen h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, #ff4444, #4488ff, #44ff44, #ffaa00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titleShimmer 3s ease-in-out infinite;
+}
+
+@keyframes titleShimmer {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3)); }
+    50% { filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.6)); }
+}
+
+#start-screen p {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 25px;
+}
+
+.gem-preview {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 35px;
+}
+
+.gem-preview .gem {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.gem-preview .gem.red { background: linear-gradient(135deg, #ff6666, #cc0000); }
+.gem-preview .gem.blue { background: linear-gradient(135deg, #66bbff, #0066cc); }
+.gem-preview .gem.green { background: linear-gradient(135deg, #66ff66, #00aa00); }
+.gem-preview .gem.gold { background: linear-gradient(135deg, #ffdd44, #ffaa00); }
+
+#start-btn {
+    padding: 15px 50px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #44aa44 0%, #228822 100%);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#start-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(68, 170, 68, 0.6);
+}
+
+/* ============================================
+   GAME OVER
+   ============================================ */
+
+#game-over {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 100;
+    text-align: center;
+}
+
+#game-over h2 {
+    font-size: 32px;
+    color: #ff4444;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+#game-over p {
+    font-size: 14px;
+    color: #aaa;
+    margin: 5px 0;
+}
+
+#game-over .final-score {
+    font-size: 28px;
+    color: #ffd700;
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+#restart-btn {
+    margin-top: 25px;
+    padding: 12px 35px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #ff6644 0%, #cc4422 100%);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+#restart-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px rgba(255, 102, 68, 0.6);
+}
+
+/* ============================================
+   ANIMACIONES DE PUNTOS
+   ============================================ */
+
+.score-popup {
+    position: absolute;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 2px 2px 0 #000;
+    pointer-events: none;
+    animation: scoreFloat 1.5s ease-out forwards;
+    z-index: 100;
+}
+
+@keyframes scoreFloat {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -80%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -150%) scale(1); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 400px) {
+    .slot-reel {
+        width: 50px;
+        height: 150px;
     }
     
-    // Actualizar casco seleccionado
-    updateHelmetSelection('red');
-}
-
-// ============================================
-// HELMET SELECCIÓN
-// ============================================
-
-function selectHelmet(color) {
-    gameState.selectedHelmet = color;
-    updateHelmetSelection(color);
-}
-
-function updateHelmetSelection(color) {
-    document.querySelectorAll('.helmet-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.color === color) {
-            btn.classList.add('active');
-        }
-    });
-}
-
-// ============================================
-// OBTENER HELMET ALEATORIO
-// ============================================
-
-function getRandomHelmet() {
-    // 40% probabilidad de cada color, excepto gold que es menos común
-    const rand = Math.random();
-    if (rand < 0.15) return 'gold'; // 15% gold
-    if (rand < 0.40) return 'red';  // 25% red
-    if (rand < 0.70) return 'blue'; // 30% blue
-    return 'green';                 // 30% green
-}
-
-// ============================================
-// ACTUALIZAR VISUAL DE CELDA
-// ============================================
-
-function updateCellVisual(row, col) {
-    const cellData = gameState.grid[row][col];
-    const cell = cellData.element;
-    const type = cellData.type;
-    
-    cell.innerHTML = `<div class="gem ${type}">${getHelmetEmoji(type)}</div>`;
-    
-    if (cellData.isMatched) {
-        cell.querySelector('.gem').classList.add('matched');
-    }
-}
-
-function getHelmetEmoji(type) {
-    const emojis = {
-        'red': '🔥',
-        'blue': '❄️',
-        'green': '🐍',
-        'gold': '⭐'
-    };
-    return emojis[type] || '';
-}
-
-// ============================================
-// MANEJO DE CLICKS
-// ============================================
-
-function handleCellClick(row, col) {
-    if (!gameState.isPlaying) return;
-
-    const clickedCell = gameState.grid[row][col];
-
-    if (gameState.selectedCell === null) {
-        // Primera selección
-        gameState.selectedCell = { row, col };
-        clickedCell.element.classList.add('selected');
-    } else {
-        // Segunda selección
-        const first = gameState.selectedCell;
-        clickedCell.element.classList.remove('selected');
-        first.element.classList.remove('selected');
-        
-        if (isAdjacent(first, { row, col })) {
-            swapHelmets(first, { row, col });
-        }
-        
-        gameState.selectedCell = null;
-    }
-}
-
-function isAdjacent(cell1, cell2) {
-    const rowDiff = Math.abs(cell1.row - cell2.row);
-    const colDiff = Math.abs(cell1.col - cell2.col);
-    return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
-}
-
-function swapHelmets(cell1, cell2) {
-    const type1 = gameState.grid[cell1.row][cell1.col].type;
-    const type2 = gameState.grid[cell2.row][cell2.col].type;
-    
-    gameState.grid[cell1.row][cell1.col].type = type2;
-    gameState.grid[cell2.row][cell2.col].type = type1;
-    
-    updateCellVisual(cell1.row, cell1.col);
-    updateCellVisual(cell2.row, cell2.col);
-    
-    // Verificar matches después del intercambio
-    setTimeout(() => {
-        checkMatches();
-    }, 200);
-}
-
-// ============================================
-// VERIFICAR MATCHES
-// ============================================
-
-function checkMatches() {
-    let matches = [];
-    
-    // Buscar matches horizontales (3+ seguidos)
-    for (let row = 0; row < 7; row++) {
-        for (let col = 0; col < 5; col++) {
-            const type = gameState.grid[row][col].type;
-            if (type === gameState.grid[row][col + 1].type &&
-                type === gameState.grid[row][col + 2].type) {
-                
-                // Encontró inicio de match horizontal
-                let matchLen = 3;
-                while (col + matchLen < 7 && 
-                       gameState.grid[row][col + matchLen].type === type) {
-                    matchLen++;
-                }
-                
-                // Agregar todas las celdas del match
-                for (let i = 0; i < matchLen; i++) {
-                    matches.push({ row, col: col + i });
-                }
-            }
-        }
+    .slot-gem {
+        width: 42px;
+        height: 42px;
+        font-size: 10px;
     }
     
-    // Buscar matches verticales (3+ seguidos)
-    for (let col = 0; col < 7; col++) {
-        for (let row = 0; row < 5; row++) {
-            const type = gameState.grid[row][col].type;
-            if (type === gameState.grid[row + 1][col].type &&
-                type === gameState.grid[row + 2][col].type) {
-                
-                // Encontró inicio de match vertical
-                let matchLen = 3;
-                while (row + matchLen < 7 && 
-                       gameState.grid[row + matchLen][col].type === type) {
-                    matchLen++;
-                }
-                
-                // Agregar todas las celdas del match
-                for (let i = 0; i < matchLen; i++) {
-                    matches.push({ row: row + i, col });
-                }
-            }
-        }
-    }
-    
-    // Eliminar duplicados
-    matches = matches.filter((pos, index, self) => 
-        index === self.findIndex((p) => p.row === pos.row && p.col === pos.col)
-    );
-    
-    if (matches.length > 0) {
-        // Calcular puntos
-        const basePoints = matches.length * 10;
-        const comboBonus = gameState.comboCount * 5;
-        const pointsEarned = basePoints + comboBonus;
-        
-        gameState.score += pointsEarned;
-        gameState.power = Math.min(100, gameState.power + matches.length);
-        
-        // MOSTRAR PUNTOS FLOTANTES
-        showFloatingPoints(pointsEarned, matches[0]);
-        
-        // MOSTRAR COMBO SI APLICA
-        if (gameState.comboCount > 1) {
-            showCombo(gameState.comboCount);
-        }
-        
-        // Animación de match
-        matches.forEach(pos => {
-            gameState.grid[pos.row][pos.col].isMatched = true;
-        });
-        
-        // Verificar línea completa (BONUS ÉPICO)
-        const lineBonus = checkLineComplete();
-        
-        if (lineBonus > 0) {
-            setTimeout(() => {
-                showLineBonus(lineBonus);
-            }, 300);
-        }
-        
-        // Remover matched y rellenar
-        setTimeout(() => {
-            matches.forEach(pos => {
-                gameState.grid[pos.row][pos.col].type = getRandomHelmet();
-                gameState.grid[pos.row][pos.col].isMatched = false;
-                updateCellVisual(pos.row, pos.col);
-            });
-            
-            gameState.comboCount = 0;
-            updateUI();
-        }, 400);
-    } else {
-        gameState.comboCount = 0;
+    #slots-container {
+        gap: 5px;
     }
 }
-
-// ============================================
-// CHECK LÍNEA COMPLETA - BONUS ÉPICO
-// ============================================
-
-function checkLineComplete() {
-    let lineBonus = 0;
-    
-    // Verificar cada fila
-    for (let row = 0; row < 7; row++) {
-        const firstType = gameState.grid[row][0].type;
-        if (firstType && gameState.grid[row].every(cell => cell.type === firstType)) {
-            // ¡Fila completa!
-            lineBonus += 100;
-            highlightLine('row', row);
-        }
-    }
-    
-    // Verificar cada columna
-    for (let col = 0; col < 7; col++) {
-        const firstType = gameState.grid[0][col].type;
-        if (firstType && gameState.grid.every(row => row[col].type === firstType)) {
-            // ¡Columna completa!
-            lineBonus += 100;
-            highlightLine('col', col);
-        }
-    }
-    
-    if (lineBonus > 0) {
-        gameState.score += lineBonus;
-        gameState.power = Math.min(100, gameState.power + 20);
-    }
-    
-    return lineBonus;
-}
-
-function highlightLine(type, index) {
-    for (let i = 0; i < 7; i++) {
-        const pos = type === 'row' ? { row: index, col: i } : { row: i, col: index };
-        const cell = gameState.grid[pos.row][pos.col].element;
-        cell.style.animation = 'none';
-        cell.offsetHeight; // Trigger reflow
-        cell.style.animation = 'lineComplete 0.5s ease';
-    }
-}
-
-// Añadir al CSS:
-/*
-@keyframes lineComplete {
-    0% { background: rgba(255, 255, 255, 0.5); transform: scale(1); }
-    50% { background: rgba(255, 215, 0, 0.8); transform: scale(1.1); }
-    100% { background: rgba(255, 255, 255, 0.5); transform: scale(1); }
-}
-*/
-
-// ============================================
-// MOSTRAR PUNTOS FLOTANTES
-// ============================================
-
-function showFloatingPoints(points, position) {
-    const gameArea = document.getElementById('game-area');
-    
-    const popup = document.createElement('div');
-    popup.className = 'score-popup';
-    popup.textContent = `+${points}`;
-    
-    // Obtener posición de la celda
-    const cell = gameState.grid[position.row][position.col].element;
-    const rect = cell.getBoundingClientRect();
-    const areaRect = gameArea.getBoundingClientRect();
-    
-    popup.style.left = `${rect.left - areaRect.left + rect.width / 2}px`;
-    popup.style.top = `${rect.top - areaRect.top + rect.height / 2}px`;
-    
-    gameArea.appendChild(popup);
-    
-    // Remover después de animación
-    setTimeout(() => popup.remove(), 1500);
-}
-
-// ============================================
-// MOSTRAR COMBO
-// ============================================
-
-function showCombo(count) {
-    const gameArea = document.getElementById('game-area');
-    
-    const combo = document.createElement('div');
-    combo.className = 'combo-display';
-    combo.textContent = `${count}x COMBO!`;
-    
-    gameArea.appendChild(combo);
-    
-    setTimeout(() => combo.remove(), 1500);
-}
-
-// ============================================
-// MOSTRAR BONUS DE LÍNEA
-// ============================================
-
-function showLineBonus(points) {
-    const gameArea = document.getElementById('game-area');
-    
-    const bonus = document.createElement('div');
-    bonus.className = 'score-popup';
-    bonus.style.fontSize = '28px';
-    bonus.style.color = '#ffd700';
-    bonus.style.textShadow = '0 0 20px #ffd700, 3px 3px 0 #000';
-    bonus.textContent = `LINE BONUS! +${points}`;
-    
-    bonus.style.left = '50%';
-    bonus.style.top = '40%';
-    bonus.style.transform = 'translate(-50%, -50%)';
-    
-    gameArea.appendChild(bonus);
-    
-    setTimeout(() => bonus.remove(), 2000);
-}
-
-// ============================================
-// ACTUALIZAR UI
-// ============================================
-
-function updateUI() {
-    document.getElementById('score').textContent = gameState.score;
-    document.getElementById('wave').textContent = gameState.wave;
-    document.getElementById('power-text').textContent = `${gameState.power}%`;
-    document.getElementById('power-bar').style.width = `${gameState.power}%`;
-    document.getElementById('health-text').textContent = gameState.hp;
-    document.getElementById('health-bar').style.width = `${gameState.hp}%`;
-}
-
-// ============================================
-// CONTROLES DEL JUEGO
-// ============================================
-
-function startGame() {
-    initGame();
-}
-
-function restartGame() {
-    initGame();
-}
-
-function gameOver() {
-    gameState.isPlaying = false;
-    document.getElementById('final-score').textContent = gameState.score;
-    document.getElementById('final-wave').textContent = gameState.wave;
-    document.getElementById('game-over').classList.add('visible');
-}
-
-// ============================================
-// EVENTOS AL CARGAR
-// ============================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Botón start
-    document.getElementById('start-btn').onclick = startGame;
-    
-    // Botón restart
-    document.getElementById('restart-btn').onclick = restartGame;
-    
-    // Controles de teclado
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !gameState.isPlaying) {
-            startGame();
-        }
-        if ((e.key === 'r' || e.key === 'R') && !gameState.isPlaying) {
-            restartGame();
-        }
-    });
-    
-    console.log('Battle of Glory loaded successfully!');
-});
