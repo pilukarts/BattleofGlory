@@ -109,6 +109,31 @@
             <button id="restart-btn" onclick="restartGame()">PLAY AGAIN</button>
         </div>
     </div>
+    !-- PANTALLA DE BONUS -->
+        <div id="bonus-screen" style="display: none;">
+            <div class="bonus-content">
+                <h2 class="bonus-title">🎉 BONUS MODE! 🎉</h2>
+                <div class="bonus-info">
+                    <div class="bonus-item">
+                        <span class="bonus-label">FREE SPINS</span>
+                        <span id="bonus-spins" class="bonus-value">10</span>
+                    </div>
+                    <div class="bonus-item">
+                        <span class="bonus-label">PROGRESS</span>
+                        <span id="bonus-progress" class="bonus-value">0 / 100</span>
+                    </div>
+                </div>
+                <p class="bonus-text">Collect 100 points to open the chest!</p>
+                <button id="bonus-spin-btn" onclick="spinSlots()">
+                    <span class="btn-icon">🎰</span>
+                    <span class="btn-text">SPIN!</span>
+                </button>
+            </div>
+        </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
 
     <script src="game.js"></script>
 </body>
