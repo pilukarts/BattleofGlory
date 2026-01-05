@@ -3,125 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle of Glory</title>
+    <title>Battle of Glory - Slot Machine</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 <body>
     <div id="game-container">
-        <!-- HUD -->
-        <div id="hud">
-            <div class="hud-section">
-                <span class="hud-label">SCORE</span>
-                <span id="score" class="hud-value">0</span>
+        <!-- Header con Vidas y Progreso -->
+        <div id="header">
+            <!-- 3 Calaveras (Vidas) -->
+            <div id="lives-container">
+                <span class="skull">💀</span>
+                <span class="skull">💀</span>
+                <span class="skull">💀</span>
             </div>
-            <div class="hud-section">
-                <span class="hud-label">WAVE</span>
-                <span id="wave" class="hud-value">1</span>
-            </div>
-            <div class="hud-section">
-                <span class="hud-label">POWER</span>
-                <div id="power-bar-container">
-                    <div id="power-bar"></div>
+            
+            <!-- Progress Bar -->
+            <div id="progress-container">
+                <div id="progress-bar">
+                    <div id="progress-fill"></div>
                 </div>
-                <span id="power-text" class="hud-value">0%</span>
+                <span id="progress-text">0 / 100</span>
             </div>
-            <div class="hud-section">
-                <span class="hud-label">HP</span>
-                <div id="health-bar-container">
-                    <div id="health-bar"></div>
+        </div>
+
+        <!-- Área del Slot Machine -->
+        <div id="slot-area">
+            <!-- Cofre de Bonus -->
+            <div id="chest-container">
+                <div id="chest">
+                    <span id="chest-icon">📦</span>
+                    <span id="chest-label">BONUS</span>
                 </div>
-                <span id="health-text" class="hud-value">100</span>
+            </div>
+
+            <!-- 4 Columnas de Slots -->
+            <div id="slots-container">
+                <!-- Columna 1 - ROJO -->
+                <div class="slot-column red-column">
+                    <div class="column-header">INFERNO</div>
+                    <div class="slot-reel" id="reel-0"></div>
+                    <div class="column-value">+5</div>
+                </div>
+                
+                <!-- Columna 2 - AZUL -->
+                <div class="slot-column blue-column">
+                    <div class="column-header">GLACIER</div>
+                    <div class="slot-reel" id="reel-1"></div>
+                    <div class="column-value">+10</div>
+                </div>
+                
+                <!-- Columna 3 - VERDE -->
+                <div class="slot-column green-column">
+                    <div class="column-header">VIPER</div>
+                    <div class="slot-reel" id="reel-2"></div>
+                    <div class="column-value">+15</div>
+                </div>
+                
+                <!-- Columna 4 - DORADO -->
+                <div class="slot-column gold-column">
+                    <div class="column-header">CELESTIAL</div>
+                    <div class="slot-reel" id="reel-3"></div>
+                    <div class="column-value">+20 / +57</div>
+                </div>
             </div>
         </div>
 
-        <!-- Área de juego -->
-        <div id="game-area">
-            <!-- Selector de cascos -->
-            <div id="helmet-selector">
-                <button class="helmet-btn active" data-color="red" onclick="selectHelmet('red')">
-                    <svg viewBox="0 0 60 60" class="helmet-icon">
-                        <defs>
-                            <linearGradient id="ir" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#ff4444"/>
-                                <stop offset="100%" style="stop-color:#880000"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M30 5 L50 15 L55 35 L48 52 L42 55 L18 55 L12 52 L5 35 L10 15 Z" fill="url(#ir)" stroke="#550000" stroke-width="2"/>
-                        <polygon points="18,28 26,25 30,35 26,45 18,45 14,35" fill="#ff2200"/>
-                        <polygon points="34,28 42,25 46,35 42,45 34,45 30,35" fill="#ff2200"/>
-                    </svg>
-                </button>
-                <button class="helmet-btn" data-color="blue" onclick="selectHelmet('blue')">
-                    <svg viewBox="0 0 60 60" class="helmet-icon">
-                        <defs>
-                            <linearGradient id="ib" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#00d4ff"/>
-                                <stop offset="100%" style="stop-color:#004466"/>
-                            </linearGradient>
-                        </defs>
-                        <ellipse cx="30" cy="28" rx="24" ry="24" fill="url(#ib)" stroke="#003355" stroke-width="2"/>
-                        <polygon points="22,20 30,15 38,20 38,30 30,35 22,30" fill="#00ffff"/>
-                    </svg>
-                </button>
-                <button class="helmet-btn" data-color="green" onclick="selectHelmet('green')">
-                    <svg viewBox="0 0 60 60" class="helmet-icon">
-                        <defs>
-                            <linearGradient id="ig" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#44ff44"/>
-                                <stop offset="100%" style="stop-color:#005500"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M30 5 L48 20 L52 35 L45 50 L35 55 L25 55 L15 50 L8 35 L12 20 Z" fill="url(#ig)" stroke="#003300" stroke-width="2"/>
-                        <ellipse cx="22" cy="26" rx="6" ry="4" fill="#00ff00"/>
-                        <ellipse cx="38" cy="26" rx="6" ry="4" fill="#00ff00"/>
-                    </svg>
-                </button>
-                <button class="helmet-btn gold-btn" data-color="gold" onclick="selectHelmet('gold')">
-                    <svg viewBox="0 0 60 60" class="helmet-icon">
-                        <defs>
-                            <radialGradient id="ic" cx="50%" cy="40%" r="60%">
-                                <stop offset="0%" style="stop-color:#ffffff"/>
-                                <stop offset="100%" style="stop-color:#b8860b"/>
-                            </radialGradient>
-                        </defs>
-                        <ellipse cx="30" cy="32" rx="25" ry="26" fill="url(#ic)" stroke="#8B7500" stroke-width="2"/>
-                        <circle cx="30" cy="32" r="14" fill="#1a1a00" stroke="#ffd700" stroke-width="2"/>
-                    </svg>
-                </button>
+        <!-- Panel de Información -->
+        <div id="info-panel">
+            <div class="info-item">
+                <span class="info-label">SCORE</span>
+                <span id="score" class="info-value">0</span>
             </div>
-
-            <!-- Grid de juego -->
-            <div id="game-grid"></div>
+            <div class="info-item">
+                <span class="info-label">WAVE</span>
+                <span id="wave" class="info-value">1</span>
+            </div>
         </div>
 
-        <!-- Instrucciones -->
-        <div id="instructions">
-            <p>🔥 INFERNO: Red gems + Blast | ❄️ GLACIER: Blue gems + Freeze | 🐍 VIPER: Green gems + Scan | ⭐ CELESTIAL: ALL gems + ULTIMATE!</p>
+        <!-- Botón SLOT -->
+        <div id="slot-button-container">
+            <button id="slot-btn" onclick="spinSlots()">
+                <span class="btn-icon">🎰</span>
+                <span class="btn-text">SPIN!</span>
+            </button>
         </div>
 
-        <!-- Pantalla de inicio -->
+        <!-- Pantalla de Inicio -->
         <div id="start-screen">
             <h1>BATTLE OF GLORY</h1>
-            <p>Collect gems, defeat enemies, conquer the galaxy!</p>
-            <div class="helmet-preview">
-                <svg viewBox="0 0 60 60" class="preview-icon">
-                    <path d="M30 5 L50 15 L55 35 L48 52 L42 55 L18 55 L12 52 L5 35 L10 15 Z" fill="#cc0000"/>
-                    <polygon points="22,28 30,35 22,45 14,35" fill="#ff2200"/>
-                </svg>
-                <svg viewBox="0 0 60 60" class="preview-icon">
-                    <ellipse cx="30" cy="28" rx="24" ry="24" fill="#0088cc"/>
-                    <polygon points="22,20 30,15 38,20 38,30 30,35 22,30" fill="#00ffff"/>
-                </svg>
-                <svg viewBox="0 0 60 60" class="preview-icon">
-                    <path d="M30 5 L48 20 L52 35 L45 50 L35 55 L25 55 L15 50 L8 35 L12 20 Z" fill="#00aa00"/>
-                    <ellipse cx="22" cy="26" rx="6" ry="4" fill="#00ff00"/>
-                    <ellipse cx="38" cy="26" rx="6" ry="4" fill="#00ff00"/>
-                </svg>
-                <svg viewBox="0 0 60 60" class="preview-icon">
-                    <ellipse cx="30" cy="32" rx="25" ry="26" fill="#ffd700"/>
-                    <circle cx="30" cy="32" r="10" fill="#ffd700"/>
-                </svg>
+            <p>Spin to collect gems and conquer the galaxy!</p>
+            <div class="gem-preview">
+                <span class="gem red">5</span>
+                <span class="gem blue">10</span>
+                <span class="gem green">15</span>
+                <span class="gem gold">20</span>
             </div>
             <button id="start-btn" onclick="startGame()">START BATTLE</button>
         </div>
@@ -130,7 +106,6 @@
         <div id="game-over">
             <h2>GAME OVER</h2>
             <p>Final Score: <span id="final-score">0</span></p>
-            <p>Wave Reached: <span id="final-wave">1</span></p>
             <button id="restart-btn" onclick="restartGame()">PLAY AGAIN</button>
         </div>
     </div>
