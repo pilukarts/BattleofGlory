@@ -1,7 +1,9 @@
-// Battle of Glory - Slot Machine Logic
+// Battle of Glory - Slot Machine Logic con BONUS
 
 const gameState = {
     isPlaying: false,
+    isBonusMode: false,
+    bonusSpins: 0,
     score: 0,
     wave: 1,
     progress: 0,
@@ -11,34 +13,35 @@ const gameState = {
 
 // Configuración de gemas
 const gemConfig = {
-    red: { value: 5, weight: 40 },
+    red: { value: 5, weight: 35 },
     blue: { value: 10, weight: 30 },
-    green: { value: 15, weight: 20 },
+    green: { value: 15, weight: 25 },
     gold: { value: 20, weight: 10 }
 };
 
 // Inicializar el juego
 function initGame() {
     gameState.isPlaying = true;
+    gameState.isBonusMode = false;
+    gameState.bonusSpins = 0;
     gameState.score = 0;
     gameState.wave = 1;
     gameState.progress = 0;
     gameState.lives = 3;
     gameState.isSpinning = false;
 
-    // Actualizar UI
     updateUI();
     updateLives();
     updateProgress();
     
-    // Ocultar pantallas
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('game-over').style.display = 'none';
+    document.getElementById('bonus-screen').style.display = 'none';
+    document.getElementById('slot-area').style.display = 'flex';
     
-    // Generar gemas iniciales
     generateInitialGems();
     
-    console.log('Battle of Glory Slot Machine started!');
+    console.log('Battle of Glory started!');
 }
 
 // Generar gemas iniciales
@@ -82,18 +85,28 @@ function createGemElement(type) {
 function spinSlots() {
     if (gameState.isSpinning || !gameState.isPlaying) return;
     
+    // Verificar si estamos en modo bonus
+    if (gameState.isBonusMode) {
+        gameState.bonusSpins--;
+        if (gameState.bonusSpins <= 0) {
+            endGame();
+            return;
+        }
+        updateBonusUI();
+    }
+    
     gameState.isSpinning = true;
     document.getElementById('slot-btn').disabled = true;
     
     // Cerrar cofre si está abierto
     document.getElementById('chest').classList.remove('open');
     
-    // Animación de giro para cada reel
+    // Animación de giro
     for (let reel = 0; reel < 4; reel++) {
         animateReel(reel);
     }
     
-    // Duración del giro
+    // Terminar giro
     setTimeout(function() {
         finishSpin();
     }, 2500);
@@ -103,7 +116,6 @@ function spinSlots() {
 function animateReel(reelIndex) {
     const reelEl = document.getElementById('reel-' + reelIndex);
     const interval = setInterval(function() {
-        // Generar nuevas gemas temporales
         reelEl.innerHTML = '';
         for (let i = 0; i < 5; i++) {
             const tempGem = createGemElement(getRandomGem());
@@ -112,7 +124,6 @@ function animateReel(reelIndex) {
         }
     }, 100);
     
-    // Detener después de tiempo aleatorio
     setTimeout(function() {
         clearInterval(interval);
     }, 1000 + Math.random() * 1500);
@@ -121,46 +132,48 @@ function animateReel(reelIndex) {
 // Terminar giro y calcular resultados
 function finishSpin() {
     let totalPoints = 0;
-    let gemsAdded = 0;
     
     for (let reel = 0; reel < 4; reel++) {
         const reelEl = document.getElementById('reel-' + reel);
         reelEl.innerHTML = '';
         
-        // Determinar resultado del reel
         const result = getReelResult();
         const gem = createGemElement(result.type);
-        
-        // Mostrar resultado
         reelEl.appendChild(gem);
         
-        // Agregar puntos
         const points = result.value;
         totalPoints += points;
-        gemsAdded++;
         
-        // Mostrar puntos flotantes
         showFloatingPoints(points, gem);
     }
     
     // Actualizar score
     gameState.score += totalPoints;
     
-    // Actualizar progreso
-    gameState.progress += totalPoints;
-    
-    // Verificar cofre (100 puntos)
-    if (gameState.progress >= 100) {
-        gameState.progress = 0;
-        openChest();
-    }
-    
-    // Verificar vidas (si no hay gemas doradas)
-    const results = getAllResults();
-    const hasGold = results.some(r => r.type === 'gold');
-    
-    if (!hasGold && Math.random() < 0.3) {
-        loseLife();
+    // Actualizar progreso (solo si NO está en modo bonus)
+    if (!gameState.isBonusMode) {
+        gameState.progress += totalPoints;
+        
+        // Verificar cofre (100 puntos)
+        if (gameState.progress >= 100) {
+            gameState.progress = 0;
+            openChest();
+        }
+        
+        // Verificar vidas (si no hay gemas doradas)
+        const results = getAllResults();
+        const hasGold = results.some(r => r.type === 'gold');
+        
+        if (!hasGold && Math.random() < 0.3) {
+            loseLife();
+        }
+    } else {
+        // En modo bonus, siempre se abre el cofre
+        if (gameState.progress >= 100) {
+            gameState.progress = 0;
+            openChest();
+        }
+        gameState.progress += totalPoints;
     }
     
     updateUI();
@@ -199,15 +212,14 @@ function openChest() {
     const chest = document.getElementById('chest');
     chest.classList.add('open');
     
-    // Bonus de 50 puntos
-    gameState.score += 50;
+    const bonusPoints = gameState.isBonusMode ? 100 : 50;
+    gameState.score += bonusPoints;
     gameState.progress = 0;
     
-    showFloatingPoints(50, chest);
+    showFloatingPoints(bonusPoints, chest);
     
     updateUI();
     
-    // Cerrar cofre después de 2 segundos
     setTimeout(function() {
         chest.classList.remove('open');
     }, 2000);
@@ -219,7 +231,39 @@ function loseLife() {
     updateLives();
     
     if (gameState.lives <= 0) {
-        endGame();
+        // EN LUGAR DE GAME OVER, IR AL BONUS
+        enterBonusMode();
+    }
+}
+
+// Entrar al modo BONUS con 10 tiradas gratis
+function enterBonusMode() {
+    gameState.isBonusMode = true;
+    gameState.bonusSpins = 10;
+    gameState.progress = 0;
+    gameState.lives = 3;
+    
+    // Mostrar pantalla de bonus
+    document.getElementById('slot-area').style.display = 'none';
+    document.getElementById('bonus-screen').style.display = 'flex';
+    
+    updateBonusUI();
+    updateLives();
+    
+    console.log('BONUS MODE ACTIVATED! 10 Free Spins!');
+}
+
+// Pantalla de bonus
+function updateBonusUI() {
+    const spinsEl = document.getElementById('bonus-spins');
+    const progressEl = document.getElementById('bonus-progress');
+    
+    if (spinsEl) {
+        spinsEl.textContent = gameState.bonusSpins;
+    }
+    
+    if (progressEl) {
+        progressEl.textContent = gameState.progress + ' / 100';
     }
 }
 
@@ -276,6 +320,8 @@ function showFloatingPoints(points, element) {
 // Terminar juego
 function endGame() {
     gameState.isPlaying = false;
+    gameState.isBonusMode = false;
+    document.getElementById('bonus-screen').style.display = 'none';
     document.getElementById('final-score').textContent = gameState.score;
     document.getElementById('game-over').style.display = 'flex';
 }
@@ -292,5 +338,5 @@ function restartGame() {
 
 // Event listeners al cargar
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Battle of Glory Slot Machine loaded!');
+    console.log('Battle of Glory loaded!');
 });
