@@ -1,257 +1,296 @@
-// Battle of Glory - Game Logic
+// Battle of Glory - Slot Machine Logic
 
 const gameState = {
     isPlaying: false,
     score: 0,
     wave: 1,
-    power: 0,
-    hp: 100,
-    grid: [],
-    selectedCell: null,
-    comboCount: 0,
-    selectedHelmet: 'red'
+    progress: 0,
+    lives: 3,
+    isSpinning: false
 };
 
-const helmetTypes = ['red', 'blue', 'green', 'gold'];
+// Configuración de gemas
+const gemConfig = {
+    red: { value: 5, weight: 40 },
+    blue: { value: 10, weight: 30 },
+    green: { value: 15, weight: 20 },
+    gold: { value: 20, weight: 10 }
+};
 
+// Inicializar el juego
 function initGame() {
-    const gridEl = document.getElementById('game-grid');
-    gridEl.innerHTML = '';
-    gameState.grid = [];
+    gameState.isPlaying = true;
     gameState.score = 0;
     gameState.wave = 1;
-    gameState.power = 0;
-    gameState.hp = 100;
-    gameState.selectedCell = null;
-    gameState.comboCount = 0;
-    gameState.isPlaying = true;
-    gameState.selectedHelmet = 'red';
+    gameState.progress = 0;
+    gameState.lives = 3;
+    gameState.isSpinning = false;
 
+    // Actualizar UI
     updateUI();
+    updateLives();
+    updateProgress();
     
+    // Ocultar pantallas
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('game-over').style.display = 'none';
-    document.getElementById('game-grid').style.display = 'grid';
-    document.getElementById('helmet-selector').style.display = 'flex';
-    document.getElementById('instructions').style.display = 'block';
-
-    // Crear grid 7x7
-    for (let row = 0; row < 7; row++) {
-        gameState.grid[row] = [];
-        for (let col = 0; col < 7; col++) {
-            const cell = document.createElement('div');
-            cell.className = 'grid-cell';
-            cell.dataset.row = row;
-            cell.dataset.col = col;
-            cell.onclick = function() { handleCellClick(row, col); };
-            
-            gridEl.appendChild(cell);
-            
-            gameState.grid[row][col] = {
-                element: cell,
-                type: getRandomHelmet(),
-                isMatched: false
-            };
-            
-            updateCellVisual(row, col);
-        }
-    }
     
-    updateHelmetSelection('red');
-}
-
-function selectHelmet(color) {
-    gameState.selectedHelmet = color;
-    updateHelmetSelection(color);
-}
-
-function updateHelmetSelection(color) {
-    document.querySelectorAll('.helmet-btn').forEach(function(btn) {
-        btn.classList.remove('active');
-        if (btn.dataset.color === color) {
-            btn.classList.add('active');
-        }
-    });
-}
-
-function getRandomHelmet() {
-    const rand = Math.random();
-    if (rand < 0.15) return 'gold';
-    if (rand < 0.40) return 'red';
-    if (rand < 0.70) return 'blue';
-    return 'green';
-}
-
-function updateCellVisual(row, col) {
-    const cellData = gameState.grid[row][col];
-    const cell = cellData.element;
-    const type = cellData.type;
+    // Generar gemas iniciales
+    generateInitialGems();
     
-    const emojis = {'red': '🔥', 'blue': '❄️', 'green': '🐍', 'gold': '⭐'};
-    cell.innerHTML = '<div class="gem ' + type + '">' + emojis[type] + '</div>';
+    console.log('Battle of Glory Slot Machine started!');
 }
 
-function handleCellClick(row, col) {
-    if (!gameState.isPlaying) return;
-
-    const clickedCell = gameState.grid[row][col];
-
-    if (gameState.selectedCell === null) {
-        gameState.selectedCell = {row: row, col: col};
-        clickedCell.element.classList.add('selected');
-    } else {
-        const first = gameState.selectedCell;
-        clickedCell.element.classList.remove('selected');
-        first.element.classList.remove('selected');
+// Generar gemas iniciales
+function generateInitialGems() {
+    for (let reel = 0; reel < 4; reel++) {
+        const reelEl = document.getElementById('reel-' + reel);
+        reelEl.innerHTML = '';
         
-        if (isAdjacent(first, {row: row, col: col})) {
-            swapHelmets(first, {row: row, col: col});
+        for (let i = 0; i < 5; i++) {
+            const gem = createGemElement(getRandomGem());
+            reelEl.appendChild(gem);
         }
-        
-        gameState.selectedCell = null;
     }
 }
 
-function isAdjacent(cell1, cell2) {
-    const rowDiff = Math.abs(cell1.row - cell2.row);
-    const colDiff = Math.abs(cell1.col - cell2.col);
-    return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+// Obtener gema aleatoria según pesos
+function getRandomGem() {
+    const rand = Math.random() * 100;
+    let cumulative = 0;
+    
+    for (const [type, config] of Object.entries(gemConfig)) {
+        cumulative += config.weight;
+        if (rand <= cumulative) {
+            return type;
+        }
+    }
+    
+    return 'red';
 }
 
-function swapHelmets(cell1, cell2) {
-    const type1 = gameState.grid[cell1.row][cell1.col].type;
-    const type2 = gameState.grid[cell2.row][cell2.col].type;
+// Crear elemento de gema
+function createGemElement(type) {
+    const div = document.createElement('div');
+    div.className = 'slot-gem ' + type;
+    div.dataset.type = type;
+    div.textContent = gemConfig[type].value;
+    return div;
+}
+
+// Girar los slots
+function spinSlots() {
+    if (gameState.isSpinning || !gameState.isPlaying) return;
     
-    gameState.grid[cell1.row][cell1.col].type = type2;
-    gameState.grid[cell2.row][cell2.col].type = type1;
+    gameState.isSpinning = true;
+    document.getElementById('slot-btn').disabled = true;
     
-    updateCellVisual(cell1.row, cell1.col);
-    updateCellVisual(cell2.row, cell2.col);
+    // Cerrar cofre si está abierto
+    document.getElementById('chest').classList.remove('open');
     
+    // Animación de giro para cada reel
+    for (let reel = 0; reel < 4; reel++) {
+        animateReel(reel);
+    }
+    
+    // Duración del giro
     setTimeout(function() {
-        checkMatches();
-    }, 200);
+        finishSpin();
+    }, 2500);
 }
 
-function checkMatches() {
-    let matches = [];
+// Animar reel individual
+function animateReel(reelIndex) {
+    const reelEl = document.getElementById('reel-' + reelIndex);
+    const interval = setInterval(function() {
+        // Generar nuevas gemas temporales
+        reelEl.innerHTML = '';
+        for (let i = 0; i < 5; i++) {
+            const tempGem = createGemElement(getRandomGem());
+            tempGem.style.opacity = '0.5';
+            reelEl.appendChild(tempGem);
+        }
+    }, 100);
     
-    // Horizontal
-    for (let row = 0; row < 7; row++) {
-        for (let col = 0; col < 5; col++) {
-            const type = gameState.grid[row][col].type;
-            if (type === gameState.grid[row][col + 1].type &&
-                type === gameState.grid[row][col + 2].type) {
-                matches.push({row: row, col: col});
-                matches.push({row: row, col: col + 1});
-                matches.push({row: row, col: col + 2});
-            }
+    // Detener después de tiempo aleatorio
+    setTimeout(function() {
+        clearInterval(interval);
+    }, 1000 + Math.random() * 1500);
+}
+
+// Terminar giro y calcular resultados
+function finishSpin() {
+    let totalPoints = 0;
+    let gemsAdded = 0;
+    
+    for (let reel = 0; reel < 4; reel++) {
+        const reelEl = document.getElementById('reel-' + reel);
+        reelEl.innerHTML = '';
+        
+        // Determinar resultado del reel
+        const result = getReelResult();
+        const gem = createGemElement(result.type);
+        
+        // Mostrar resultado
+        reelEl.appendChild(gem);
+        
+        // Agregar puntos
+        const points = result.value;
+        totalPoints += points;
+        gemsAdded++;
+        
+        // Mostrar puntos flotantes
+        showFloatingPoints(points, gem);
+    }
+    
+    // Actualizar score
+    gameState.score += totalPoints;
+    
+    // Actualizar progreso
+    gameState.progress += totalPoints;
+    
+    // Verificar cofre (100 puntos)
+    if (gameState.progress >= 100) {
+        gameState.progress = 0;
+        openChest();
+    }
+    
+    // Verificar vidas (si no hay gemas doradas)
+    const results = getAllResults();
+    const hasGold = results.some(r => r.type === 'gold');
+    
+    if (!hasGold && Math.random() < 0.3) {
+        loseLife();
+    }
+    
+    updateUI();
+    updateProgress();
+    
+    gameState.isSpinning = false;
+    document.getElementById('slot-btn').disabled = false;
+}
+
+// Obtener resultado de un reel
+function getReelResult() {
+    const rand = Math.random() * 100;
+    let cumulative = 0;
+    
+    for (const [type, config] of Object.entries(gemConfig)) {
+        cumulative += config.weight;
+        if (rand <= cumulative) {
+            return { type: type, value: config.value };
         }
     }
     
-    // Vertical
-    for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 7; col++) {
-            const type = gameState.grid[row][col].type;
-            if (type === gameState.grid[row + 1][col].type &&
-                type === gameState.grid[row + 2][col].type) {
-                matches.push({row: row, col: col});
-                matches.push({row: row + 1, col: col});
-                matches.push({row: row + 2, col: col});
-            }
-        }
+    return { type: 'red', value: 5 };
+}
+
+// Obtener todos los resultados
+function getAllResults() {
+    const results = [];
+    for (let i = 0; i < 4; i++) {
+        results.push(getReelResult());
     }
+    return results;
+}
+
+// Abrir cofre de bonus
+function openChest() {
+    const chest = document.getElementById('chest');
+    chest.classList.add('open');
     
-    // Eliminar duplicados
-    matches = matches.filter(function(pos, index) {
-        return index === matches.findIndex(function(p) {
-            return p.row === pos.row && p.col === pos.col;
-        });
+    // Bonus de 50 puntos
+    gameState.score += 50;
+    gameState.progress = 0;
+    
+    showFloatingPoints(50, chest);
+    
+    updateUI();
+    
+    // Cerrar cofre después de 2 segundos
+    setTimeout(function() {
+        chest.classList.remove('open');
+    }, 2000);
+}
+
+// Perder una vida
+function loseLife() {
+    gameState.lives--;
+    updateLives();
+    
+    if (gameState.lives <= 0) {
+        endGame();
+    }
+}
+
+// Actualizar UI
+function updateUI() {
+    document.getElementById('score').textContent = gameState.score;
+    document.getElementById('wave').textContent = gameState.wave;
+}
+
+// Actualizar vidas
+function updateLives() {
+    const skulls = document.querySelectorAll('.skull');
+    skulls.forEach(function(skull, index) {
+        if (index < gameState.lives) {
+            skull.classList.add('active');
+            skull.classList.remove('lost');
+        } else {
+            skull.classList.remove('active');
+            skull.classList.add('lost');
+        }
     });
-    
-    if (matches.length > 0) {
-        const points = matches.length * 10 + gameState.comboCount * 5;
-        gameState.score += points;
-        gameState.power = Math.min(100, gameState.power + matches.length);
-        
-        showFloatingPoints(points, matches[0]);
-        
-        if (gameState.comboCount > 1) {
-            showCombo(gameState.comboCount);
-        }
-        
-        matches.forEach(function(pos) {
-            gameState.grid[pos.row][pos.col].isMatched = true;
-            gameState.grid[pos.row][pos.col].element.classList.add('matched');
-        });
-        
-        setTimeout(function() {
-            matches.forEach(function(pos) {
-                gameState.grid[pos.row][pos.col].type = getRandomHelmet();
-                gameState.grid[pos.row][pos.col].isMatched = false;
-                gameState.grid[pos.row][pos.col].element.classList.remove('matched');
-                updateCellVisual(pos.row, pos.col);
-            });
-            gameState.comboCount = 0;
-            updateUI();
-        }, 400);
-    } else {
-        gameState.comboCount = 0;
-    }
 }
 
-function showFloatingPoints(points, position) {
-    const gameArea = document.getElementById('game-area');
+// Actualizar progress bar
+function updateProgress() {
+    const fill = document.getElementById('progress-fill');
+    const text = document.getElementById('progress-text');
+    
+    const percentage = Math.min(100, gameState.progress);
+    fill.style.width = percentage + '%';
+    text.textContent = gameState.progress + ' / 100';
+}
+
+// Mostrar puntos flotantes
+function showFloatingPoints(points, element) {
+    const gameContainer = document.getElementById('game-container');
     const popup = document.createElement('div');
     popup.className = 'score-popup';
     popup.textContent = '+' + points;
     
-    const cell = gameState.grid[position.row][position.col].element;
-    const rect = cell.getBoundingClientRect();
-    const areaRect = gameArea.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+    const containerRect = gameContainer.getBoundingClientRect();
     
-    popup.style.left = (rect.left - areaRect.left + rect.width / 2) + 'px';
-    popup.style.top = (rect.top - areaRect.top + rect.height / 2) + 'px';
+    popup.style.left = (rect.left - containerRect.left + rect.width / 2) + 'px';
+    popup.style.top = (rect.top - containerRect.top + rect.height / 2) + 'px';
     
-    gameArea.appendChild(popup);
+    gameContainer.appendChild(popup);
     
-    setTimeout(function() { popup.remove(); }, 1500);
+    setTimeout(function() {
+        popup.remove();
+    }, 1500);
 }
 
-function showCombo(count) {
-    const gameArea = document.getElementById('game-area');
-    const combo = document.createElement('div');
-    combo.className = 'combo-display';
-    combo.textContent = count + 'x COMBO!';
-    gameArea.appendChild(combo);
-    setTimeout(function() { combo.remove(); }, 1500);
+// Terminar juego
+function endGame() {
+    gameState.isPlaying = false;
+    document.getElementById('final-score').textContent = gameState.score;
+    document.getElementById('game-over').style.display = 'flex';
 }
 
-function updateUI() {
-    document.getElementById('score').textContent = gameState.score;
-    document.getElementById('wave').textContent = gameState.wave;
-    document.getElementById('power-text').textContent = gameState.power + '%';
-    document.getElementById('power-bar').style.width = gameState.power + '%';
-    document.getElementById('health-text').textContent = gameState.hp;
-    document.getElementById('health-bar').style.width = gameState.hp + '%';
-}
-
+// Iniciar juego
 function startGame() {
     initGame();
 }
 
+// Reiniciar juego
 function restartGame() {
     initGame();
 }
 
-function gameOver() {
-    gameState.isPlaying = false;
-    document.getElementById('final-score').textContent = gameState.score;
-    document.getElementById('final-wave').textContent = gameState.wave;
-    document.getElementById('game-over').style.display = 'flex';
-}
-
-// Inicializar al cargar
+// Event listeners al cargar
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Battle of Glory loaded!');
+    console.log('Battle of Glory Slot Machine loaded!');
 });
