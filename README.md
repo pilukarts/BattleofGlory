@@ -18,6 +18,24 @@ npm install
 npm start
 ___
 
+Tecla	Acción	
+← →	Mover	
+Espacio   Disparar	
+Shift	Especial	
+
+---
+
+🗺️ Roadmap
+ 
+4 personajes base
+ 
+Sistema de puntuación
+ 
+Efectos de sonido
+ 
+Modo multijugador
+ 
+Web3
 
 
 ## Descripción / Description
