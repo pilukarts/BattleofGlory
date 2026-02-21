@@ -9,6 +9,16 @@ Un juego de arcade espacial donde 4 Cadetes de diferentes planetas luchan por la
 An arcade space game where 4 Cadets from different planets fight for supreme glory.
 
 ---
+## 🚀 Instalación local
+
+```bash
+git clone https://github.com/pilukarts/BattleofGlory.git
+cd BattleofGlory
+npm install
+npm start
+___
+
+
 
 ## Descripción / Description
 
