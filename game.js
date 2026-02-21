@@ -733,4 +733,67 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🏆 High Score guardado:', highScore);
     
     console.log('✅ Juego listo - Presiona INICIAR BATALLA');
-});
+} 
+    
+   
+);// Añadir al estado
+const state = {
+    // ... estado actual ...
+    mode: 'single', // 'single' | 'local'
+    currentPlayer: 1,
+    players: {
+        1: { score: 0, lives: 3, name: 'Jugador 1' },
+        2: { score: 0, lives: 3, name: 'Jugador 2' }
+    }
+};
+
+// Nueva función: seleccionar modo
+function selectGameMode(mode) {
+    state.mode = mode;
+    
+    if (mode === 'local') {
+        // Resetear ambos jugadores
+        state.players[1] = { score: 0, lives: 3, name: 'Jugador 1' };
+        state.players[2] = { score: 0, lives: 3, name: 'Jugador 2' };
+        state.currentPlayer = 1;
+        showScreen('characterSelect'); // Nueva pantalla
+    } else {
+        initGame();
+    }
+}
+
+// Cambiar turno después de cada spin
+function nextTurn() {
+    if (state.mode === 'local') {
+        // Verificar si el jugador actual perdió
+        if (state.lives <= 0) {
+            eliminatePlayer(state.currentPlayer);
+            return;
+        }
+        
+        // Guardar estado del jugador actual
+        state.players[state.currentPlayer].score = state.score;
+        state.players[state.currentPlayer].lives = state.lives;
+        
+        // Cambiar jugador
+        state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
+        
+        // Cargar estado del nuevo jugador
+        state.score = state.players[state.currentPlayer].score;
+        state.lives = state.players[state.currentPlayer].lives;
+        
+        updatePlayerIndicator();
+        showNotification(`Turno de ${state.players[state.currentPlayer].name}`, 'info');
+    }
+}
+
+// Modificar finishSpin() para llamar nextTurn()
+function finishSpin() {
+    // ... código actual ...
+    
+    // Al final, cambiar turno si es modo local
+    if (state.mode === 'local' && !state.isBonusMode) {
+        setTimeout(nextTurn, 1500);
+    }
+}
+
