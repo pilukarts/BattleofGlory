@@ -1,0 +1,21 @@
+{
+    "name": "Battle of Glory",
+    "short_name": "BattleGlory",
+    "description": "Arcade slot machine game with 4 cosmic cadets fighting for supreme glory",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#ff4444",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["games", "entertainment"],
+    "lang": "es",
+    "dir": "ltr"
+}
