@@ -1,0 +1,6 @@
+const Player = require('../src/js/player');
+
+test('player should have health', () => {
+  const p = new Player('Inferno');
+  expect(p.health).toBe(100);
+});
