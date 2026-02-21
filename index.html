@@ -1,140 +1,190 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle of Glory - Slot Machine</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-</head>
-<body>
-    <div id="game-container">
-        <!-- Header con Vidas y Progreso -->
-        <div id="header">
-            <!-- 3 Calaveras (Vidas) -->
-            <div id="lives-container">
-                <span class="skull">💀</span>
-                <span class="skull">💀</span>
-                <span class="skull">💀</span>
-            </div>
-            
-            <!-- Progress Bar -->
-            <div id="progress-container">
-                <div id="progress-bar">
-                    <div id="progress-fill"></div>
-                </div>
-                <span id="progress-text">0 / 100</span>
-            </div>
-        </div>
+// Battle of Glory - Inicialización Corregida
 
-        <!-- Área del Slot Machine -->
-        <div id="slot-area">
-            <!-- Cofre de Bonus -->
-            <div id="chest-container">
-                <div id="chest">
-                    <span id="chest-icon">📦</span>
-                    <span id="chest-label">BONUS</span>
-                </div>
-            </div>
+const gameState = {
+    isPlaying: false,
+    isBonusMode: false,
+    bonusSpins: 0,
+    score: 0,
+    wave: 1,
+    progress: 0,
+    lives: 3,
+    isSpinning: false,
+    audioContext: null,
+    isAudioInitialized: false
+};
 
-            <!-- 4 Columnas de Slots -->
-            <div id="slots-container">
-                <!-- Columna 1 - ROJO -->
-                <div class="slot-column red-column">
-                    <div class="column-header">INFERNO</div>
-                    <div class="slot-reel" id="reel-0"></div>
-                    <div class="column-value">+5</div>
-                </div>
-                
-                <!-- Columna 2 - AZUL -->
-                <div class="slot-column blue-column">
-                    <div class="column-header">GLACIER</div>
-                    <div class="slot-reel" id="reel-1"></div>
-                    <div class="column-value">+10</div>
-                </div>
-                
-                <!-- Columna 3 - VERDE -->
-                <div class="slot-column green-column">
-                    <div class="column-header">VIPER</div>
-                    <div class="slot-reel" id="reel-2"></div>
-                    <div class="column-value">+15</div>
-                </div>
-                
-                <!-- Columna 4 - DORADO -->
-                <div class="slot-column gold-column">
-                    <div class="column-header">CELESTIAL</div>
-                    <div class="slot-reel" id="reel-3"></div>
-                    <div class="column-value">+20 / +57</div>
-                </div>
-            </div>
-        </div>
+// Configuración de gemas
+const gemConfig = {
+    red: { value: 5, weight: 35, color: '#ff4444' },
+    blue: { value: 10, weight: 30, color: '#4444ff' },
+    green: { value: 15, weight: 25, color: '#44ff44' },
+    gold: { value: 20, weight: 10, color: '#ffdd00' }
+};
 
-        <!-- Panel de Información -->
-        <div id="info-panel">
-            <div class="info-item">
-                <span class="info-label">SCORE</span>
-                <span id="score" class="info-value">0</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">WAVE</span>
-                <span id="wave" class="info-value">1</span>
-            </div>
-        </div>
+// Referencias DOM cacheadas (mejor rendimiento)
+const domElements = {};
 
-        <!-- Botón SLOT -->
-        <div id="slot-button-container">
-            <button id="slot-btn" onclick="spinSlots()">
-                <span class="btn-icon">🎰</span>
-                <span class="btn-text">SPIN!</span>
-            </button>
-        </div>
+// ============ INICIALIZACIÓN MEJORADA ============
 
-        <!-- Pantalla de Inicio -->
-        <div id="start-screen">
-            <h1>BATTLE OF GLORY</h1>
-            <p>Spin to collect gems and conquer the galaxy!</p>
-            <div class="gem-preview">
-                <span class="gem red">5</span>
-                <span class="gem blue">10</span>
-                <span class="gem green">15</span>
-                <span class="gem gold">20</span>
-            </div>
-            <button id="start-btn" onclick="startGame()">START BATTLE</button>
-        </div>
+function cacheDOMElements() {
+    const elements = [
+        'start-screen', 'game-over', 'bonus-screen', 'slot-area',
+        'game-container', 'slot-btn', 'chest', 'score', 'wave',
+        'progress-fill', 'progress-text', 'bonus-spins', 'bonus-progress'
+    ];
+    
+    elements.forEach(id => {
+        domElements[id] = document.getElementById(id);
+        if (!domElements[id]) {
+            console.warn(`Elemento #${id} no encontrado en DOM`);
+        }
+    });
+    
+    // Cachear reels
+    for (let i = 0; i < 4; i++) {
+        domElements[`reel-${i}`] = document.getElementById(`reel-${i}`);
+    }
+}
 
-        <!-- Game Over -->
-        <div id="game-over">
-            <h2>GAME OVER</h2>
-            <p>Final Score: <span id="final-score">0</span></p>
-            <button id="restart-btn" onclick="restartGame()">PLAY AGAIN</button>
-        </div>
-    </div>
-    !-- PANTALLA DE BONUS -->
-        <div id="bonus-screen" style="display: none;">
-            <div class="bonus-content">
-                <h2 class="bonus-title">🎉 BONUS MODE! 🎉</h2>
-                <div class="bonus-info">
-                    <div class="bonus-item">
-                        <span class="bonus-label">FREE SPINS</span>
-                        <span id="bonus-spins" class="bonus-value">10</span>
-                    </div>
-                    <div class="bonus-item">
-                        <span class="bonus-label">PROGRESS</span>
-                        <span id="bonus-progress" class="bonus-value">0 / 100</span>
-                    </div>
-                </div>
-                <p class="bonus-text">Collect 100 points to open the chest!</p>
-                <button id="bonus-spin-btn" onclick="spinSlots()">
-                    <span class="btn-icon">🎰</span>
-                    <span class="btn-text">SPIN!</span>
-                </button>
-            </div>
-        </div>
+function initAudio() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            gameState.audioContext = new AudioContext();
+            gameState.isAudioInitialized = true;
+            console.log('✅ Audio inicializado');
+        }
+    } catch (e) {
+        console.warn('⚠️ Audio no disponible:', e);
+    }
+}
 
-    <script src="game.js"></script>
-</body>
-</html>
+function initGame() {
+    console.log('🎮 Inicializando Battle of Glory...');
+    
+    // Validar DOM
+    if (!domElements['game-container']) {
+        console.error('❌ Error: game-container no encontrado');
+        return false;
+    }
+    
+    // Resetear estado
+    gameState.isPlaying = true;
+    gameState.isBonusMode = false;
+    gameState.bonusSpins = 0;
+    gameState.score = 0;
+    gameState.wave = 1;
+    gameState.progress = 0;
+    gameState.lives = 3;
+    gameState.isSpinning = false;
+    
+    // Inicializar audio en primera interacción (requerido por navegadores)
+    if (!gameState.isAudioInitialized) {
+        initAudio();
+    }
+    
+    // Ocultar/mostrar pantallas con validación
+    setDisplay('start-screen', 'none');
+    setDisplay('game-over', 'none');
+    setDisplay('bonus-screen', 'none');
+    setDisplay('slot-area', 'flex');
+    
+    // Actualizar UI
+    updateUI();
+    updateLives();
+    updateProgress();
+    
+    // Generar gemas iniciales
+    generateInitialGems();
+    
+    console.log('✅ Battle of Glory iniciado correctamente');
+    return true;
+}
 
-    <script src="game.js"></script>
-</body>
-</html>
+// Helper seguro para cambiar display
+function setDisplay(elementKey, value) {
+    const el = domElements[elementKey];
+    if (el) {
+        el.style.display = value;
+    } else {
+        console.warn(`No se pudo ocultar #${elementKey}`);
+    }
+}
+
+// ============ EVENT LISTENERS MEJORADOS ============
+
+function setupEventListeners() {
+    // Botón de inicio
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            initAudio(); // Audio necesita interacción de usuario
+            startGame();
+        });
+    }
+    
+    // Botón de spin
+    const slotBtn = document.getElementById('slot-btn');
+    if (slotBtn) {
+        slotBtn.addEventListener('click', spinSlots);
+    }
+    
+    // Botón de reinicio
+    const restartBtn = document.getElementById('restart-btn');
+    if (restartBtn) {
+        restartBtn.addEventListener('click', restartGame);
+    }
+    
+    // Teclado
+    document.addEventListener('keydown', handleKeyInput);
+    
+    // Prevenir zoom en móviles (doble tap)
+    document.addEventListener('touchstart', preventZoom, { passive: false });
+}
+
+function handleKeyInput(e) {
+    if (!gameState.isPlaying) return;
+    
+    switch(e.code) {
+        case 'Space':
+            e.preventDefault();
+            spinSlots();
+            break;
+        case 'KeyR':
+            if (gameState.isBonusMode) {
+                restartGame();
+            }
+            break;
+    }
+}
+
+function preventZoom(e) {
+    if (e.touches.length > 1) {
+        e.preventDefault();
+    }
+}
+
+// ============ INICIALIZACIÓN AL CARGAR ============
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Battle of Glory cargando...');
+    
+    // 1. Cachear elementos DOM
+    cacheDOMElements();
+    
+    // 2. Configurar event listeners
+    setupEventListeners();
+    
+    // 3. Registrar Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('✅ SW registrado'))
+            .catch(err => console.warn('⚠️ SW error:', err));
+    }
+    
+    // 4. Detectar capacidades del dispositivo
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log(`📱 Dispositivo: ${isMobile ? 'Móvil' : 'Desktop'}`);
+    
+    console.log('✅ Battle of Glory listo para jugar');
+});
