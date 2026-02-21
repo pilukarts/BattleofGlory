@@ -1,8 +1,78 @@
-const CACHE_NAME = 'battle-of-glory-v1';
-const urlsToCache = ['/', '/index.html', '/src/css/styles.css'];
+/**
+ * Service Worker para Battle of Glory
+ * Habilita modo offline y PWA
+ */
 
+const CACHE_NAME = 'battle-of-glory-v1';
+const urlsToCache = [
+    '/',
+    '/index.html',
+    '/style.css',
+    '/game.js',
+    '/favicon.svg'
+];
+
+// Instalación - cachear recursos
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
-  );
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('Cache abierto');
+                return cache.addAll(urlsToCache);
+            })
+            .catch(err => console.error('Error cacheando:', err))
+    );
+    self.skipWaiting();
+});
+
+// Activación - limpiar caches antiguas
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames
+                    .filter(name => name !== CACHE_NAME)
+                    .map(name => caches.delete(name))
+            );
+        })
+    );
+    self.clients.claim();
+});
+
+// Fetch - servir desde cache o red
+self.addEventListener('fetch', (event) => {
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                // Cache hit - retornar respuesta
+                if (response) {
+                    return response;
+                }
+                
+                // Clonar request
+                const fetchRequest = event.request.clone();
+                
+                return fetch(fetchRequest).then(response => {
+                    // Verificar respuesta válida
+                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                        return response;
+                    }
+                    
+                    // Clonar respuesta
+                    const responseToCache = response.clone();
+                    
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, responseToCache);
+                    });
+                    
+                    return response;
+                });
+            })
+            .catch(() => {
+                // Fallback si falla red y no está en cache
+                if (event.request.mode === 'navigate') {
+                    return caches.match('/index.html');
+                }
+            })
+    );
 });
