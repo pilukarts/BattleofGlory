@@ -1,0 +1,13 @@
+{
+  "name": "battle-of-glory",
+  "version": "0.1.0-alpha",
+  "description": "Arcade space game with 4 unique cadets",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["game", "arcade", "svg", "javascript"],
+  "author": "Pilukarts",
+  "license": "MIT"
+}
