@@ -1,0 +1,190 @@
+// Battle of Glory - Inicialización Corregida
+
+const gameState = {
+    isPlaying: false,
+    isBonusMode: false,
+    bonusSpins: 0,
+    score: 0,
+    wave: 1,
+    progress: 0,
+    lives: 3,
+    isSpinning: false,
+    audioContext: null,
+    isAudioInitialized: false
+};
+
+// Configuración de gemas
+const gemConfig = {
+    red: { value: 5, weight: 35, color: '#ff4444' },
+    blue: { value: 10, weight: 30, color: '#4444ff' },
+    green: { value: 15, weight: 25, color: '#44ff44' },
+    gold: { value: 20, weight: 10, color: '#ffdd00' }
+};
+
+// Referencias DOM cacheadas (mejor rendimiento)
+const domElements = {};
+
+// ============ INICIALIZACIÓN MEJORADA ============
+
+function cacheDOMElements() {
+    const elements = [
+        'start-screen', 'game-over', 'bonus-screen', 'slot-area',
+        'game-container', 'slot-btn', 'chest', 'score', 'wave',
+        'progress-fill', 'progress-text', 'bonus-spins', 'bonus-progress'
+    ];
+    
+    elements.forEach(id => {
+        domElements[id] = document.getElementById(id);
+        if (!domElements[id]) {
+            console.warn(`Elemento #${id} no encontrado en DOM`);
+        }
+    });
+    
+    // Cachear reels
+    for (let i = 0; i < 4; i++) {
+        domElements[`reel-${i}`] = document.getElementById(`reel-${i}`);
+    }
+}
+
+function initAudio() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            gameState.audioContext = new AudioContext();
+            gameState.isAudioInitialized = true;
+            console.log('✅ Audio inicializado');
+        }
+    } catch (e) {
+        console.warn('⚠️ Audio no disponible:', e);
+    }
+}
+
+function initGame() {
+    console.log('🎮 Inicializando Battle of Glory...');
+    
+    // Validar DOM
+    if (!domElements['game-container']) {
+        console.error('❌ Error: game-container no encontrado');
+        return false;
+    }
+    
+    // Resetear estado
+    gameState.isPlaying = true;
+    gameState.isBonusMode = false;
+    gameState.bonusSpins = 0;
+    gameState.score = 0;
+    gameState.wave = 1;
+    gameState.progress = 0;
+    gameState.lives = 3;
+    gameState.isSpinning = false;
+    
+    // Inicializar audio en primera interacción (requerido por navegadores)
+    if (!gameState.isAudioInitialized) {
+        initAudio();
+    }
+    
+    // Ocultar/mostrar pantallas con validación
+    setDisplay('start-screen', 'none');
+    setDisplay('game-over', 'none');
+    setDisplay('bonus-screen', 'none');
+    setDisplay('slot-area', 'flex');
+    
+    // Actualizar UI
+    updateUI();
+    updateLives();
+    updateProgress();
+    
+    // Generar gemas iniciales
+    generateInitialGems();
+    
+    console.log('✅ Battle of Glory iniciado correctamente');
+    return true;
+}
+
+// Helper seguro para cambiar display
+function setDisplay(elementKey, value) {
+    const el = domElements[elementKey];
+    if (el) {
+        el.style.display = value;
+    } else {
+        console.warn(`No se pudo ocultar #${elementKey}`);
+    }
+}
+
+// ============ EVENT LISTENERS MEJORADOS ============
+
+function setupEventListeners() {
+    // Botón de inicio
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            initAudio(); // Audio necesita interacción de usuario
+            startGame();
+        });
+    }
+    
+    // Botón de spin
+    const slotBtn = document.getElementById('slot-btn');
+    if (slotBtn) {
+        slotBtn.addEventListener('click', spinSlots);
+    }
+    
+    // Botón de reinicio
+    const restartBtn = document.getElementById('restart-btn');
+    if (restartBtn) {
+        restartBtn.addEventListener('click', restartGame);
+    }
+    
+    // Teclado
+    document.addEventListener('keydown', handleKeyInput);
+    
+    // Prevenir zoom en móviles (doble tap)
+    document.addEventListener('touchstart', preventZoom, { passive: false });
+}
+
+function handleKeyInput(e) {
+    if (!gameState.isPlaying) return;
+    
+    switch(e.code) {
+        case 'Space':
+            e.preventDefault();
+            spinSlots();
+            break;
+        case 'KeyR':
+            if (gameState.isBonusMode) {
+                restartGame();
+            }
+            break;
+    }
+}
+
+function preventZoom(e) {
+    if (e.touches.length > 1) {
+        e.preventDefault();
+    }
+}
+
+// ============ INICIALIZACIÓN AL CARGAR ============
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Battle of Glory cargando...');
+    
+    // 1. Cachear elementos DOM
+    cacheDOMElements();
+    
+    // 2. Configurar event listeners
+    setupEventListeners();
+    
+    // 3. Registrar Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('✅ SW registrado'))
+            .catch(err => console.warn('⚠️ SW error:', err));
+    }
+    
+    // 4. Detectar capacidades del dispositivo
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log(`📱 Dispositivo: ${isMobile ? 'Móvil' : 'Desktop'}`);
+    
+    console.log('✅ Battle of Glory listo para jugar');
+});
