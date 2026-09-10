@@ -105,4 +105,4 @@ MIT License - Un juego de arcade espacial donde 4 Cadetes de diferentes planetas
 
 ---
 
-*¡Que la comience la gloria!* / *Let the glory begin!*
+*¡Que comience la gloria!* / *Let the glory begin!*
