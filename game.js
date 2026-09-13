@@ -3,13 +3,13 @@
 const NS = 'http://www.w3.org/2000/svg';
 const W = 960, H = 640;
 const cadets = [
-  {id:'inferno',name:'INFERNO',icon:'🔥',color:'#ff604b',power:'Nova explosiva',speed:250,damage:2},
-  {id:'glacier',name:'GLACIER',icon:'❄️',color:'#65ddff',power:'Congelación total',speed:220,damage:2},
-  {id:'viper',name:'VIPER',icon:'🐍',color:'#6eff7d',power:'Ráfaga venenosa',speed:285,damage:1},
-  {id:'celestial',name:'CELESTIAL',icon:'⭐',color:'#c27aff',power:'Pulso cósmico',speed:235,damage:3}
+  {id:'inferno',name:'INFERNO',icon:'🔥',color:'#ff604b',planet:'PYRA',power:'Nova explosiva',welcome:'El fuego de Pyra luchará contigo.',speed:250,damage:2},
+  {id:'glacier',name:'GLACIER',icon:'❄️',color:'#65ddff',planet:'NIVALIS',power:'Congelación total',welcome:'Mantén la calma. Nivalis nos protege.',speed:220,damage:2},
+  {id:'viper',name:'VIPER',icon:'🐍',color:'#6eff7d',planet:'VERDANT',power:'Ráfaga venenosa',welcome:'Velocidad, precisión y victoria.',speed:285,damage:1},
+  {id:'celestial',name:'CELESTIAL',icon:'⭐',color:'#c27aff',planet:'ASTRA',power:'Pulso cósmico',welcome:'Las estrellas han marcado nuestro camino.',speed:235,damage:3}
 ];
 
-const dom = Object.fromEntries(['menu','game','game-over','cadet-grid','start-btn','again-btn','arena','entities','stars','message','score','wave','health','special','hud-cadet','final-score','final-wave','result-title','sound-btn','bonus'].map(id => [id.replaceAll('-','_'), document.getElementById(id)]));
+const dom = Object.fromEntries(['menu','game','game-over','cadet-grid','start-btn','again-btn','arena','entities','stars','message','score','wave','health','special','hud-cadet','final-score','final-wave','result-title','sound-btn','bonus','welcome','welcome-avatar','welcome-title','welcome-copy'].map(id => [id.replaceAll('-','_'), document.getElementById(id)]));
 const keys = new Set();
 let selected = cadets[0], player, enemies=[], bullets=[], particles=[];
 let playing=false, score=0, wave=1, specialReady=true, last=0, nextWaveTimer=0, muted=false, audio;
@@ -37,7 +37,7 @@ function setupMenu(){
     const button=document.createElement('button');
     button.className='cadet'+(i===0?' selected':'');
     button.style.setProperty('--cadet',c.color);
-    button.innerHTML=`<span class="cadet-icon">${c.icon}</span><strong>${c.name}</strong><small>${c.power}</small>`;
+    button.innerHTML=`<span class="cadet-portrait">${c.icon}</span><strong>${c.name}</strong><small>${c.power}</small><small class="cadet-planet">PLANETA ${c.planet}</small>`;
     button.onclick=()=>{
       selected=c;
       document.querySelectorAll('.cadet').forEach(x=>x.classList.remove('selected'));
@@ -85,12 +85,27 @@ function startGame(){
   enemies=[]; bullets=[]; particles=[]; pickups=[]; score=0; wave=1; specialReady=true; activeBonus=null; bonusUntil=0; bonusRound=false;
   player={x:W/2,y:H-90,hp:100,dirX:0,dirY:-1,node:characterNode(selected),shotAt:0};
   dom.entities.append(player.node); position(player);
-  playing=true; last=performance.now(); nextWaveTimer=0;
+  playing=false; nextWaveTimer=0;
   dom.hud_cadet.textContent=selected.name;
   updateHud();
-  announce('OLEADA 1');
-  spawnWave();
-  requestAnimationFrame(loop);
+  showWelcome(()=>{
+    playing=true; last=performance.now();
+    announce('OLEADA 1'); spawnWave(); requestAnimationFrame(loop);
+  });
+}
+
+function showWelcome(onComplete){
+  dom.welcome.style.setProperty('--welcome-color',selected.color);
+  dom.welcome_avatar.textContent=selected.icon;
+  dom.welcome_title.textContent=selected.name+' · LISTO';
+  dom.welcome_copy.textContent=selected.welcome;
+  dom.welcome.classList.remove('hidden','exit');
+  tone(240,.18);
+  setTimeout(()=>tone(520,.25),420);
+  setTimeout(()=>{
+    dom.welcome.classList.add('exit');
+    setTimeout(()=>{dom.welcome.classList.add('hidden');dom.welcome.classList.remove('exit');onComplete()},650);
+  },1900);
 }
 
 function spawnWave(){
