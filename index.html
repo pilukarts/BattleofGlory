@@ -8,7 +8,7 @@
   <title>Battle of Glory</title>
   <link rel="manifest" href="./manifest.json?v=3">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=4">
+  <link rel="stylesheet" href="./style.css?v=6">
   <script>
     // Retira la caché de la demo anterior para evitar mezclar versiones.
     if ('serviceWorker' in navigator) {
@@ -72,6 +72,13 @@
           <g id="entities"></g>
         </svg>
         <div id="message" class="message"></div>
+        <div id="welcome" class="welcome hidden" aria-live="polite">
+          <div class="portal-rings"><i></i><i></i><i></i></div>
+          <div id="welcome-avatar" class="welcome-avatar"></div>
+          <p>TRANSMISIÓN ENTRANTE</p>
+          <h2 id="welcome-title">CADETE LISTO</h2>
+          <span id="welcome-copy">La gloria nos espera.</span>
+        </div>
       </div>
 
       <div class="controls">
@@ -101,6 +108,6 @@
       <button id="again-btn" class="primary">VOLVER A JUGAR</button>
     </section>
   </main>
-  <script src="./game.js?v=4"></script>
+  <script src="./game.js?v=6"></script>
 </body>
 </html>
