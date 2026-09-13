@@ -8,7 +8,7 @@
   <title>Battle of Glory</title>
   <link rel="manifest" href="./manifest.json?v=3">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=6">
+  <link rel="stylesheet" href="./style.css?v=7">
   <script>
     // Retira la caché de la demo anterior para evitar mezclar versiones.
     if ('serviceWorker' in navigator) {
@@ -21,13 +21,17 @@
   </script>
 </head>
 <body>
+  <div class="cosmos" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
   <main class="shell">
     <header class="topbar">
       <div>
         <p class="eyebrow">PILUKARTS PRESENTA</p>
         <h1>BATTLE <span>OF GLORY</span></h1>
       </div>
-      <button id="sound-btn" class="icon-btn" aria-label="Activar o desactivar sonido">🔊</button>
+      <div class="top-actions">
+        <span class="online-badge"><i></i> SISTEMA ONLINE</span>
+        <button id="sound-btn" class="icon-btn" aria-label="Activar o desactivar sonido">🔊</button>
+      </div>
     </header>
 
     <section id="menu" class="panel hero">
@@ -35,9 +39,14 @@
         <p class="kicker">ARCADE · TÁCTICA · SUPERVIVENCIA</p>
         <h2>Cuatro mundos.<br>Una sola gloria.</h2>
         <p>Elige un cadete, domina el tablero y resiste las oleadas del Vacío.</p>
+        <div class="mission-stats" aria-label="Características de la misión">
+          <span><b>∞</b> OLEADAS</span>
+          <span><b>4</b> HÉROES</span>
+          <span><b>1</b> DESTINO</span>
+        </div>
       </div>
       <div>
-        <h3>ELIGE TU CADETE</h3>
+        <div class="selector-head"><h3>ELIGE TU CADETE</h3><span>01 / PREPARACIÓN</span></div>
         <div id="cadet-grid" class="cadet-grid" aria-label="Selección de personaje"></div>
         <button id="start-btn" class="primary">ENTRAR EN LA ARENA</button>
       </div>
@@ -108,6 +117,7 @@
       <button id="again-btn" class="primary">VOLVER A JUGAR</button>
     </section>
   </main>
-  <script src="./game.js?v=6"></script>
+  <footer class="footer"><span>© PILUKARTS</span><span>DISEÑADO PARA LA GLORIA</span></footer>
+  <script src="./game.js?v=7"></script>
 </body>
 </html>
