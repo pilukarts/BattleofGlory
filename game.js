@@ -1,729 +1,203 @@
-/**
- * Battle of Glory - Slot Machine Game
- * Versión corregida y optimizada
- */
-
 'use strict';
 
-// ============ CONFIGURACIÓN GLOBAL ============
+const NS = 'http://www.w3.org/2000/svg';
+const W = 960, H = 640;
+const cadets = [
+  {id:'inferno',name:'INFERNO',icon:'🔥',color:'#ff604b',power:'Nova explosiva',speed:250,damage:2},
+  {id:'glacier',name:'GLACIER',icon:'❄️',color:'#65ddff',power:'Congelación total',speed:220,damage:2},
+  {id:'viper',name:'VIPER',icon:'🐍',color:'#6eff7d',power:'Ráfaga venenosa',speed:285,damage:1},
+  {id:'celestial',name:'CELESTIAL',icon:'⭐',color:'#c27aff',power:'Pulso cósmico',speed:235,damage:3}
+];
 
-const CONFIG = {
-    // Gemas y sus probabilidades
-    GEMS: {
-        red: { value: 5, weight: 35, color: '#ff4444', name: 'Rubi', icon: '🔴' },
-        blue: { value: 10, weight: 30, color: '#4444ff', name: 'Zafiro', icon: '🔵' },
-        green: { value: 15, weight: 25, color: '#44ff44', name: 'Esmeralda', icon: '🟢' },
-        gold: { value: 20, weight: 10, color: '#ffdd00', name: 'Oro', icon: '🟡' }
-    },
-    
-    // Configuración de juego
-    GAME: {
-        initialLives: 3,
-        bonusSpins: 10,
-        chestThreshold: 100,
-        spinDuration: 2500,
-        reelStopDelay: 400
-    },
-    
-    // Audio (frecuencias para generar sonidos)
-    AUDIO: {
-        spin: 440,      // A4
-        win: 880,       // A5
-        chest: 660,     // E5
-        bonus: 550,     // C#5
-        lose: 220       // A3
-    }
-};
+const dom = Object.fromEntries(['menu','game','game-over','cadet-grid','start-btn','again-btn','arena','entities','stars','message','score','wave','health','special','hud-cadet','final-score','final-wave','result-title','sound-btn'].map(id => [id.replaceAll('-','_'), document.getElementById(id)]));
+const keys = new Set();
+let selected = cadets[0], player, enemies=[], bullets=[], particles=[];
+let playing=false, score=0, wave=1, specialReady=true, last=0, nextWaveTimer=0, muted=false, audio;
 
-// ============ ESTADO DEL JUEGO ============
+function svg(tag, attrs={}) {
+  const node = document.createElementNS(NS, tag);
+  Object.entries(attrs).forEach(([k,v]) => node.setAttribute(k,v));
+  return node;
+}
 
-const state = {
-    isPlaying: false,
-    isBonusMode: false,
-    isSpinning: false,
-    isMuted: false,
-    
-    // Stats
-    score: 0,
-    wave: 1,
-    progress: 0,
-    lives: 3,
-    bonusSpins: 0,
-    totalGems: 0,
-    
-    // Audio
-    audioContext: null,
-    
-    // Referencias DOM
-    dom: {}
-};
-
-// ============ INICIALIZACIÓN ============
-
-/**
- * Cachea todos los elementos DOM necesarios
- */
-function cacheDOM() {
-    const elements = {
-        // Screens
-        startScreen: 'start-screen',
-        slotArea: 'slot-area',
-        bonusScreen: 'bonus-screen',
-        gameOver: 'game-over',
-        
-        // Contenedores
-        gameContainer: 'game-container',
-        notificationArea: 'notification-area',
-        
-        // Botones
-        startBtn: 'start-btn',
-        slotBtn: 'slot-btn',
-        restartBtn: 'restart-btn',
-        shareBtn: 'share-btn',
-        audioToggle: 'audio-toggle',
-        
-        // Reels
-        reels: ['reel-0', 'reel-1', 'reel-2', 'reel-3'],
-        
-        // HUD
-        score: 'score',
-        wave: 'wave',
-        livesContainer: 'lives-container',
-        progressFill: 'progress-fill',
-        progressText: 'progress-text',
-        
-        // Bonus
-        bonusSpins: 'bonus-spins',
-        bonusProgressText: 'bonus-progress-text',
-        bonusProgressFill: 'bonus-progress-fill',
-        
-        // Game Over
-        finalScore: 'final-score',
-        finalWave: 'final-wave',
-        finalGems: 'final-gems',
-        
-        // Cofre
-        chest: 'chest'
+function setupMenu(){
+  cadets.forEach((c,i)=>{
+    const button=document.createElement('button');
+    button.className='cadet'+(i===0?' selected':'');
+    button.style.setProperty('--cadet',c.color);
+    button.innerHTML=`<span class="cadet-icon">${c.icon}</span><strong>${c.name}</strong><small>${c.power}</small>`;
+    button.onclick=()=>{
+      selected=c;
+      document.querySelectorAll('.cadet').forEach(x=>x.classList.remove('selected'));
+      button.classList.add('selected');
+      tone(420, .05);
     };
-    
-    // Cachear elementos individuales
-    for (const [key, id] of Object.entries(elements)) {
-        if (Array.isArray(id)) {
-            state.dom[key] = id.map(i => document.getElementById(i));
-        } else {
-            state.dom[key] = document.getElementById(id);
-        }
-    }
-    
-    console.log('✅ DOM cacheado');
+    dom.cadet_grid.appendChild(button);
+  });
 }
 
-/**
- * Inicializa el contexto de audio (requiere interacción de usuario)
- */
-function initAudio() {
-    if (state.audioContext) return;
-    
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-            state.audioContext = new AudioContext();
-            console.log('✅ Audio inicializado');
-        }
-    } catch (e) {
-        console.warn('⚠️ Audio no disponible:', e);
-        state.isMuted = true;
-    }
+function makeStars(){
+  for(let i=0;i<65;i++){
+    dom.stars.appendChild(svg('circle',{cx:Math.random()*W,cy:Math.random()*H,r:Math.random()*1.8+.3,fill:'#fff',opacity:Math.random()*.55+.15}));
+  }
 }
 
-/**
- * Reproduce un tono simple
- */
-function playTone(frequency, duration = 200, type = 'sine') {
-    if (state.isMuted || !state.audioContext) return;
-    
-    try {
-        const osc = state.audioContext.createOscillator();
-        const gain = state.audioContext.createGain();
-        
-        osc.connect(gain);
-        gain.connect(state.audioContext.destination);
-        
-        osc.frequency.value = frequency;
-        osc.type = type;
-        
-        gain.gain.setValueAtTime(0.3, state.audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, state.audioContext.currentTime + duration / 1000);
-        
-        osc.start(state.audioContext.currentTime);
-        osc.stop(state.audioContext.currentTime + duration / 1000);
-    } catch (e) {
-        console.warn('Error de audio:', e);
-    }
+function characterNode(c){
+  const g=svg('g',{filter:'url(#glow)'});
+  g.append(svg('circle',{r:24,fill:c.color,opacity:.18,stroke:c.color,'stroke-width':2}));
+  g.append(svg('path',{d:'M0 -23 L18 17 L0 10 L-18 17 Z',fill:c.color,stroke:'#fff','stroke-width':2}));
+  g.append(svg('circle',{cy:-4,r:5,fill:'#fff'}));
+  return g;
 }
 
-// ============ FUNCIONES DEL JUEGO ============
-
-/**
- * Inicializa el juego completo
- */
-function initGame() {
-    console.log('🎮 Iniciando Battle of Glory...');
-    
-    // Resetear estado
-    state.isPlaying = true;
-    state.isBonusMode = false;
-    state.isSpinning = false;
-    state.score = 0;
-    state.wave = 1;
-    state.progress = 0;
-    state.lives = CONFIG.GAME.initialLives;
-    state.bonusSpins = 0;
-    state.totalGems = 0;
-    
-    // Actualizar UI
-    updateUI();
-    updateLives();
-    updateProgress();
-    
-    // Cambiar pantallas
-    showScreen('slotArea');
-    
-    // Generar gemas iniciales
-    generateInitialGems();
-    
-    // Habilitar botón de spin
-    if (state.dom.slotBtn) {
-        state.dom.slotBtn.disabled = false;
-    }
-    
-    playTone(CONFIG.AUDIO.bonus, 400);
-    console.log('✅ Juego iniciado');
+function enemyNode(){
+  const g=svg('g',{filter:'url(#glow)'});
+  g.append(svg('circle',{r:19,fill:'#ff315f',opacity:.25,stroke:'#ff5475','stroke-width':2}));
+  g.append(svg('path',{d:'M-15 -10 L0 -20 L15 -10 L12 15 L0 9 L-12 15 Z',fill:'#7c1738'}));
+  g.append(svg('circle',{cx:-6,cy:-5,r:3,fill:'#fff'}));
+  g.append(svg('circle',{cx:6,cy:-5,r:3,fill:'#fff'}));
+  return g;
 }
 
-/**
- * Muestra una pantalla específica
- */
-function showScreen(screenName) {
-    // Ocultar todas
-    ['startScreen', 'slotArea', 'bonusScreen', 'gameOver'].forEach(screen => {
-        if (state.dom[screen]) {
-            state.dom[screen].style.display = 'none';
-            state.dom[screen].classList.remove('active');
-        }
+function position(obj){ obj.node.setAttribute('transform',`translate(${obj.x} ${obj.y}) rotate(${obj.angle||0})`); }
+
+function startGame(){
+  initAudio();
+  dom.menu.classList.add('hidden');
+  dom.game_over.classList.add('hidden');
+  dom.game.classList.remove('hidden');
+  dom.entities.replaceChildren();
+  enemies=[]; bullets=[]; particles=[]; score=0; wave=1; specialReady=true;
+  player={x:W/2,y:H-90,hp:100,dirX:0,dirY:-1,node:characterNode(selected),shotAt:0};
+  dom.entities.append(player.node); position(player);
+  playing=true; last=performance.now(); nextWaveTimer=0;
+  dom.hud_cadet.textContent=selected.name;
+  updateHud();
+  announce('OLEADA 1');
+  spawnWave();
+  requestAnimationFrame(loop);
+}
+
+function spawnWave(){
+  const count=3+wave*2;
+  for(let i=0;i<count;i++){
+    const edge=Math.floor(Math.random()*3);
+    const e={x:edge===0?30:edge===1?W-30:60+Math.random()*(W-120),y:edge===2?35:50+Math.random()*260,hp:1+Math.floor(wave/3),speed:48+wave*6,node:enemyNode(),hitAt:0};
+    dom.entities.append(e.node); position(e); enemies.push(e);
+  }
+}
+
+function fire(){
+  if(!playing || performance.now()-player.shotAt<180)return;
+  player.shotAt=performance.now();
+  const b={x:player.x+player.dirX*28,y:player.y+player.dirY*28,vx:player.dirX*560,vy:player.dirY*560,damage:selected.damage,node:svg('circle',{r:6,fill:selected.color,filter:'url(#glow)'})};
+  dom.entities.append(b.node); bullets.push(b); tone(650,.035);
+}
+
+function special(){
+  if(!playing || !specialReady)return;
+  specialReady=false; dom.special.textContent='CARGANDO';
+  tone(180,.28);
+  enemies.forEach(e=>{
+    const d=Math.hypot(e.x-player.x,e.y-player.y);
+    const range=selected.id==='celestial'?360:270;
+    if(d<range) e.hp-=selected.id==='inferno'?4:selected.id==='viper'?2:3;
+    if(selected.id==='glacier' && d<range)e.speed*=.35;
+  });
+  const ring=svg('circle',{cx:player.x,cy:player.y,r:10,fill:'none',stroke:selected.color,'stroke-width':10,opacity:.9});
+  dom.entities.prepend(ring);
+  ring.animate([{r:10,opacity:1},{r:300,opacity:0}],{duration:650,easing:'ease-out'}).onfinish=()=>ring.remove();
+  setTimeout(()=>{specialReady=true;dom.special.textContent='LISTO'},7000);
+}
+
+function loop(now){
+  if(!playing)return;
+  const dt=Math.min((now-last)/1000,.035); last=now;
+  updatePlayer(dt); updateBullets(dt); updateEnemies(dt,now); cleanup();
+  if(enemies.length===0){
+    nextWaveTimer+=dt;
+    if(nextWaveTimer>1.4){wave++;nextWaveTimer=0;announce('OLEADA '+wave);spawnWave();}
+  }
+  updateHud();
+  requestAnimationFrame(loop);
+}
+
+function updatePlayer(dt){
+  let dx=(keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0);
+  let dy=(keys.has('ArrowDown')?1:0)-(keys.has('ArrowUp')?1:0);
+  if(dx||dy){const l=Math.hypot(dx,dy);dx/=l;dy/=l;player.dirX=dx;player.dirY=dy;player.angle=Math.atan2(dy,dx)*180/Math.PI+90}
+  player.x=Math.max(28,Math.min(W-28,player.x+dx*selected.speed*dt));
+  player.y=Math.max(28,Math.min(H-28,player.y+dy*selected.speed*dt));
+  if(keys.has('Space'))fire();
+  position(player);
+}
+
+function updateBullets(dt){
+  bullets.forEach(b=>{
+    b.x+=b.vx*dt;b.y+=b.vy*dt;
+    b.node.setAttribute('cx',b.x);b.node.setAttribute('cy',b.y);
+    enemies.forEach(e=>{
+      if(!b.dead && Math.hypot(e.x-b.x,e.y-b.y)<25){e.hp-=b.damage;b.dead=true;score+=10}
     });
-    
-    // Mostrar la solicitada
-    const target = state.dom[screenName];
-    if (target) {
-        target.style.display = screenName === 'slotArea' ? 'flex' : 'block';
-        target.classList.add('active');
-    }
+    if(b.x<0||b.x>W||b.y<0||b.y>H)b.dead=true;
+  });
 }
 
-/**
- * Genera gemas iniciales en los reels
- */
-function generateInitialGems() {
-    state.dom.reels.forEach((reel, index) => {
-        if (!reel) return;
-        
-        reel.innerHTML = '';
-        for (let i = 0; i < 5; i++) {
-            const gemType = getRandomGem();
-            const gem = createGemElement(gemType);
-            reel.appendChild(gem);
-        }
-    });
+function updateEnemies(dt,now){
+  enemies.forEach(e=>{
+    const dx=player.x-e.x,dy=player.y-e.y,d=Math.max(1,Math.hypot(dx,dy));
+    e.x+=dx/d*e.speed*dt;e.y+=dy/d*e.speed*dt;e.angle=Math.atan2(dy,dx)*180/Math.PI+90;position(e);
+    if(d<45 && now-e.hitAt>700){e.hitAt=now;player.hp-=10;dom.arena.animate([{filter:'brightness(2)'},{filter:'none'}],{duration:180});tone(110,.08)}
+    if(e.hp<=0){e.dead=true;score+=50;burst(e.x,e.y,selected.color)}
+  });
+  if(player.hp<=0)endGame();
 }
 
-/**
- * Obtiene una gema aleatoria basada en pesos
- */
-function getRandomGem() {
-    const rand = Math.random() * 100;
-    let cumulative = 0;
-    
-    for (const [type, config] of Object.entries(CONFIG.GEMS)) {
-        cumulative += config.weight;
-        if (rand <= cumulative) {
-            return type;
-        }
-    }
-    
-    return 'red';
+function burst(x,y,color){
+  for(let i=0;i<7;i++){
+    const p=svg('circle',{cx:x,cy:y,r:3,fill:color});
+    dom.entities.append(p);
+    const a=Math.random()*Math.PI*2,d=20+Math.random()*50;
+    p.animate([{transform:'translate(0 0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`,opacity:0}],{duration:450}).onfinish=()=>p.remove();
+  }
 }
 
-/**
- * Crea elemento DOM para una gema
- */
-function createGemElement(type) {
-    const config = CONFIG.GEMS[type];
-    const div = document.createElement('div');
-    
-    div.className = `slot-gem ${type}`;
-    div.dataset.type = type;
-    div.innerHTML = `
-        <span class="gem-icon">${config.icon}</span>
-        <span class="gem-value">${config.value}</span>
-    `;
-    div.style.borderColor = config.color;
-    
-    return div;
+function cleanup(){
+  bullets=bullets.filter(b=>{if(b.dead){b.node.remove();return false}return true});
+  enemies=enemies.filter(e=>{if(e.dead){e.node.remove();return false}return true});
 }
 
-/**
- * Gira los slots
- */
-function spinSlots() {
-    // Validaciones
-    if (state.isSpinning || !state.isPlaying) return;
-    
-    // Modo bonus - verificar spins restantes
-    if (state.isBonusMode) {
-        state.bonusSpins--;
-        if (state.bonusSpins < 0) {
-            endGame();
-            return;
-        }
-        updateBonusUI();
-    }
-    
-    // Iniciar spin
-    state.isSpinning = true;
-    if (state.dom.slotBtn) {
-        state.dom.slotBtn.disabled = true;
-        state.dom.slotBtn.classList.add('spinning');
-    }
-    
-    // Cerrar cofre si está abierto
-    if (state.dom.chest) {
-        state.dom.chest.classList.remove('open', 'glowing');
-    }
-    
-    playTone(CONFIG.AUDIO.spin, 600, 'square');
-    
-    // Animar cada reel con delay
-    state.dom.reels.forEach((reel, index) => {
-        if (reel) {
-            setTimeout(() => animateReel(reel, index), index * 200);
-        }
-    });
-    
-    // Finalizar después de la duración total
-    setTimeout(finishSpin, CONFIG.GAME.spinDuration);
+function updateHud(){
+  dom.score.textContent=score;
+  dom.wave.textContent=wave;
+  dom.health.textContent=Math.max(0,player?.hp||0);
 }
 
-/**
- * Animación individual de un reel
- */
-function animateReel(reelElement, reelIndex) {
-    let steps = 0;
-    const maxSteps = 20 + (reelIndex * 5); // Cada reel gira más tiempo
-    
-    const interval = setInterval(() => {
-        reelElement.innerHTML = '';
-        
-        // Crear gemas temporales con efecto de movimiento
-        for (let i = 0; i < 5; i++) {
-            const tempGem = createGemElement(getRandomGem());
-            tempGem.style.opacity = i === 2 ? '1' : '0.3';
-            tempGem.style.transform = `scale(${i === 2 ? 1.2 : 0.8})`;
-            reelElement.appendChild(tempGem);
-        }
-        
-        steps++;
-        if (steps >= maxSteps) {
-            clearInterval(interval);
-        }
-    }, 100);
+function announce(text){
+  dom.message.textContent=text;dom.message.classList.add('show');
+  setTimeout(()=>dom.message.classList.remove('show'),900);
 }
 
-/**
- * Finaliza el spin y calcula resultados
- */
-function finishSpin() {
-    let totalPoints = 0;
-    const results = [];
-    
-    // Generar resultado final para cada reel
-    state.dom.reels.forEach((reel, index) => {
-        if (!reel) return;
-        
-        const result = getReelResult();
-        results.push(result);
-        
-        // Mostrar gemas finales
-        reel.innerHTML = '';
-        for (let i = 0; i < 5; i++) {
-            const isCenter = i === 2;
-            const gemType = isCenter ? result.type : getRandomGem();
-            const gem = createGemElement(gemType);
-            
-            if (isCenter) {
-                gem.classList.add('winning');
-                gem.style.transform = 'scale(1.3)';
-                gem.style.boxShadow = `0 0 20px ${CONFIG.GEMS[result.type].color}`;
-            }
-            
-            reel.appendChild(gem);
-        }
-        
-        // Puntos del centro
-        if (index === 1 || index === 2) { // Reels 1 y 2 dan puntos
-            totalPoints += result.value;
-            showFloatingPoints(result.value, reel, CONFIG.GEMS[result.type].color);
-        }
-    });
-    
-    // Actualizar score
-    state.score += totalPoints;
-    state.totalGems += results.length;
-    
-    // Verificar victoria (gemas doradas)
-    const hasGold = results.some(r => r.type === 'gold');
-    
-    if (hasGold) {
-        playTone(CONFIG.AUDIO.win, 500, 'sine');
-        showNotification('¡GEMA DE ORO! +20', 'gold');
-    }
-    
-    // Actualizar progreso
-    if (!state.isBonusMode) {
-        state.progress += totalPoints;
-        
-        // Verificar cofre
-        if (state.progress >= CONFIG.GAME.chestThreshold) {
-            state.progress = 0;
-            openChest();
-        }
-        
-        // Perder vida si no hay oro (30% probabilidad)
-        if (!hasGold && Math.random() < 0.3) {
-            loseLife();
-        }
-    } else {
-        state.progress += totalPoints;
-        if (state.progress >= CONFIG.GAME.chestThreshold) {
-            state.progress = 0;
-            openChest();
-        }
-    }
-    
-    // Actualizar UI
-    updateUI();
-    updateProgress();
-    
-    // Reactivar botón
-    state.isSpinning = false;
-    if (state.dom.slotBtn) {
-        state.dom.slotBtn.disabled = false;
-        state.dom.slotBtn.classList.remove('spinning');
-    }
+function endGame(){
+  playing=false;
+  dom.game.classList.add('hidden');dom.game_over.classList.remove('hidden');
+  dom.final_score.textContent=score;dom.final_wave.textContent=wave;
+  dom.result_title.textContent=wave>=8?'¡GLORIA CONQUISTADA!':'EL VACÍO VENCIÓ ESTA VEZ';
 }
 
-/**
- * Obtiene resultado ponderado para un reel
- */
-function getReelResult() {
-    const type = getRandomGem();
-    return {
-        type: type,
-        value: CONFIG.GEMS[type].value
-    };
-}
+function initAudio(){if(!audio)try{audio=new (window.AudioContext||window.webkitAudioContext)()}catch{}}
+function tone(freq,duration){if(muted||!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.connect(g);g.connect(audio.destination);o.frequency.value=freq;g.gain.setValueAtTime(.07,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.start();o.stop(audio.currentTime+duration)}
 
-/**
- * Abre el cofre de bonus
- */
-function openChest() {
-    if (!state.dom.chest) return;
-    
-    state.dom.chest.classList.add('open', 'glowing');
-    
-    const bonusPoints = state.isBonusMode ? 100 : 50;
-    state.score += bonusPoints;
-    
-    playTone(CONFIG.AUDIO.chest, 800, 'sine');
-    showFloatingPoints(bonusPoints, state.dom.chest, '#ffd700');
-    showNotification('¡COFRE ABIERTO! +' + bonusPoints, 'chest');
-    
-    setTimeout(() => {
-        state.dom.chest.classList.remove('open', 'glowing');
-    }, 2000);
-    
-    updateUI();
-}
-
-/**
- * Pierde una vida
- */
-function loseLife() {
-    state.lives--;
-    updateLives();
-    
-    playTone(CONFIG.AUDIO.lose, 300, 'sawtooth');
-    
-    // Efecto visual de daño
-    document.body.classList.add('damage-effect');
-    setTimeout(() => document.body.classList.remove('damage-effect'), 300);
-    
-    if (state.lives <= 0) {
-        setTimeout(enterBonusMode, 500);
-    }
-}
-
-/**
- * Entra en modo bonus
- */
-function enterBonusMode() {
-    state.isBonusMode = true;
-    state.bonusSpins = CONFIG.GAME.bonusSpins;
-    state.progress = 0;
-    state.lives = CONFIG.GAME.initialLives;
-    
-    showScreen('bonusScreen');
-    updateBonusUI();
-    
-    playTone(CONFIG.AUDIO.bonus, 1000, 'sine');
-    showNotification('🎰 ¡MODO BONUS ACTIVADO! 🎰', 'bonus');
-    
-    console.log('Modo bonus activado:', state.bonusSpins, 'spins');
-}
-
-/**
- * Finaliza el juego
- */
-function endGame() {
-    state.isPlaying = false;
-    state.isBonusMode = false;
-    
-    // Actualizar pantalla de game over
-    if (state.dom.finalScore) state.dom.finalScore.textContent = state.score;
-    if (state.dom.finalWave) state.dom.finalWave.textContent = state.wave;
-    if (state.dom.finalGems) state.dom.finalGems.textContent = state.totalGems;
-    
-    showScreen('gameOver');
-    
-    // Guardar high score
-    const highScore = localStorage.getItem('bog-highscore') || 0;
-    if (state.score > highScore) {
-        localStorage.setItem('bog-highscore', state.score);
-        showNotification('🏆 ¡NUEVO RÉCORD! 🏆', 'record');
-    }
-}
-
-// ============ UI UPDATES ============
-
-function updateUI() {
-    if (state.dom.score) state.dom.score.textContent = state.score.toLocaleString();
-    if (state.dom.wave) state.dom.wave.textContent = state.wave;
-}
-
-function updateLives() {
-    if (!state.dom.livesContainer) return;
-    
-    const skulls = state.dom.livesContainer.querySelectorAll('.skull');
-    skulls.forEach((skull, index) => {
-        if (index < state.lives) {
-            skull.classList.add('active');
-            skull.classList.remove('lost');
-            skull.textContent = '💀';
-        } else {
-            skull.classList.remove('active');
-            skull.classList.add('lost');
-            skull.textContent = '💨';
-        }
-    });
-}
-
-function updateProgress() {
-    if (state.dom.progressFill) {
-        const pct = Math.min(100, (state.progress / CONFIG.GAME.chestThreshold) * 100);
-        state.dom.progressFill.style.width = pct + '%';
-    }
-    if (state.dom.progressText) {
-        state.dom.progressText.textContent = `${state.progress} / ${CONFIG.GAME.chestThreshold}`;
-    }
-}
-
-function updateBonusUI() {
-    if (state.dom.bonusSpins) {
-        state.dom.bonusSpins.textContent = state.bonusSpins;
-    }
-    if (state.dom.bonusProgressText) {
-        state.dom.bonusProgressText.textContent = `${state.progress} / ${CONFIG.GAME.chestThreshold}`;
-    }
-    if (state.dom.bonusProgressFill) {
-        const pct = Math.min(100, (state.progress / CONFIG.GAME.chestThreshold) * 100);
-        state.dom.bonusProgressFill.style.width = pct + '%';
-    }
-}
-
-// ============ EFECTOS VISUALES ============
-
-function showFloatingPoints(points, element, color = '#fff') {
-    if (!element || !state.dom.gameContainer) return;
-    
-    const popup = document.createElement('div');
-    popup.className = 'score-popup';
-    popup.textContent = '+' + points;
-    popup.style.color = color;
-    popup.style.textShadow = `0 0 10px ${color}`;
-    
-    const rect = element.getBoundingClientRect();
-    const containerRect = state.dom.gameContainer.getBoundingClientRect();
-    
-    popup.style.left = (rect.left - containerRect.left + rect.width / 2) + 'px';
-    popup.style.top = (rect.top - containerRect.top) + 'px';
-    
-    state.dom.gameContainer.appendChild(popup);
-    
-    // Animación
-    requestAnimationFrame(() => {
-        popup.style.transform = 'translateY(-100px) scale(1.5)';
-        popup.style.opacity = '0';
-    });
-    
-    setTimeout(() => popup.remove(), 1000);
-}
-
-function showNotification(text, type = 'info') {
-    if (!state.dom.notificationArea) return;
-    
-    const notif = document.createElement('div');
-    notif.className = `notification ${type}`;
-    notif.textContent = text;
-    
-    state.dom.notificationArea.appendChild(notif);
-    
-    setTimeout(() => {
-        notif.classList.add('show');
-    }, 10);
-    
-    setTimeout(() => {
-        notif.classList.remove('show');
-        setTimeout(() => notif.remove(), 300);
-    }, 2000);
-}
-
-// ============ EVENT HANDLERS ============
-
-function handleStart() {
-    initAudio();
-    initGame();
-}
-
-function handleRestart() {
-    initGame();
-}
-
-function handleShare() {
-    const text = `¡Obtuve ${state.score} puntos en Battle of Glory! ¿Puedes superarme?`;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: 'Battle of Glory',
-            text: text,
-            url: window.location.href
-        });
-    } else {
-        navigator.clipboard.writeText(text + ' ' + window.location.href);
-        showNotification('📋 Copiado al portapapeles', 'info');
-    }
-}
-
-function toggleAudio() {
-    state.isMuted = !state.isMuted;
-    const btn = state.dom.audioToggle;
-    if (btn) {
-        btn.textContent = state.isMuted ? '🔇' : '🔊';
-    }
-    showNotification(state.isMuted ? 'Audio desactivado' : 'Audio activado', 'info');
-}
-
-function handleKeydown(e) {
-    if (!state.isPlaying) return;
-    
-    switch(e.code) {
-        case 'Space':
-            e.preventDefault();
-            if (!state.isSpinning) spinSlots();
-            break;
-        case 'KeyR':
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                handleRestart();
-            }
-            break;
-        case 'KeyM':
-            toggleAudio();
-            break;
-    }
-}
-
-// ============ SETUP INICIAL ============
-
-function setupEventListeners() {
-    // Botones principales
-    if (state.dom.startBtn) {
-        state.dom.startBtn.addEventListener('click', handleStart);
-    }
-    
-    if (state.dom.slotBtn) {
-        state.dom.slotBtn.addEventListener('click', spinSlots);
-    }
-    
-    if (state.dom.restartBtn) {
-        state.dom.restartBtn.addEventListener('click', handleRestart);
-    }
-    
-    if (state.dom.shareBtn) {
-        state.dom.shareBtn.addEventListener('click', handleShare);
-    }
-    
-    if (state.dom.audioToggle) {
-        state.dom.audioToggle.addEventListener('click', toggleAudio);
-    }
-    
-    // Teclado
-    document.addEventListener('keydown', handleKeydown);
-    
-    // Prevenir comportamientos por defecto problemáticos
-    document.addEventListener('touchmove', (e) => {
-        if (e.scale !== 1) e.preventDefault();
-    }, { passive: false });
-    
-    // Prevenir menú contextual en botones de juego
-    ['startBtn', 'slotBtn', 'restartBtn'].forEach(id => {
-        const btn = state.dom[id];
-        if (btn) {
-            btn.addEventListener('contextmenu', e => e.preventDefault());
-        }
-    });
-}
-
-/**
- * Registra Service Worker para PWA
- */
-function registerSW() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('✅ Service Worker registrado'))
-            .catch(err => console.warn('⚠️ SW error:', err));
-    }
-}
-
-// ============ INICIO ============
-
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Battle of Glory v1.0 cargando...');
-
-    cacheDOM();
-    setupEventListeners();
-    registerSW();
-
-    const highScore = localStorage.getItem('bog-highscore') || 0;
-    console.log('🏆 High Score guardado:', highScore);
-    console.log('✅ Juego listo - Presiona INICIAR BATALLA');
+document.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code.startsWith('Shift'))special()});
+document.addEventListener('keyup',e=>keys.delete(e.code));
+document.querySelectorAll('[data-key]').forEach(btn=>{
+  const code=btn.dataset.key;
+  const down=e=>{e.preventDefault();keys.add(code);if(code.startsWith('Shift'))special()};
+  const up=e=>{e.preventDefault();keys.delete(code)};
+  btn.addEventListener('pointerdown',down);btn.addEventListener('pointerup',up);btn.addEventListener('pointercancel',up);btn.addEventListener('pointerleave',up);
 });
+dom.start_btn.onclick=startGame;
+dom.again_btn.onclick=()=>{dom.game_over.classList.add('hidden');dom.menu.classList.remove('hidden')};
+dom.sound_btn.onclick=()=>{muted=!muted;dom.sound_btn.textContent=muted?'🔇':'🔊'};
+setupMenu();makeStars();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
