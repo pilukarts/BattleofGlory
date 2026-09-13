@@ -37,7 +37,7 @@ function setupMenu(){
     const button=document.createElement('button');
     button.className='cadet'+(i===0?' selected':'');
     button.style.setProperty('--cadet',c.color);
-    button.innerHTML=`<span class="cadet-portrait">${c.icon}</span><strong>${c.name}</strong><small>${c.power}</small><small class="cadet-planet">PLANETA ${c.planet}</small>`;
+    button.innerHTML=`<span class="cadet-portrait" style="--portrait-index:${i}" role="img" aria-label="${c.name}"></span><strong>${c.name}</strong><small>${c.power}</small><small class="cadet-planet">PLANETA ${c.planet}</small>`;
     button.onclick=()=>{
       selected=c;
       document.querySelectorAll('.cadet').forEach(x=>x.classList.remove('selected'));
@@ -96,7 +96,9 @@ function startGame(){
 
 function showWelcome(onComplete){
   dom.welcome.style.setProperty('--welcome-color',selected.color);
-  dom.welcome_avatar.textContent=selected.icon;
+  dom.welcome_avatar.textContent='';
+  dom.welcome_avatar.style.setProperty('--portrait-index',cadets.indexOf(selected));
+  dom.welcome_avatar.setAttribute('aria-label',selected.name);
   dom.welcome_title.textContent=selected.name+' · LISTO';
   dom.welcome_copy.textContent=selected.welcome;
   dom.welcome.classList.remove('hidden','exit');
