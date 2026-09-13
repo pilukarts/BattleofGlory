@@ -1,166 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0a0a0a">
-    <meta name="description" content="Battle of Glory - Arcade slot machine game with 4 cosmic cadets">
-    
-    <title>Battle of Glory 🚀</title>
-    
-    <!-- PWA -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    
-    <!-- Estilos -->
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- Preload crítico -->
-    <link rel="preload" href="game.js" as="script">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#070b1c">
+  <meta name="description" content="Battle of Glory: arena táctica espacial">
+  <title>Battle of Glory</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <div id="game-container">
-        
-        <!-- 🎬 Pantalla de inicio -->
-        <div id="start-screen" class="screen active">
-            <div class="logo">
-                <h1>🔥 BATTLE OF GLORY ⚔️</h1>
-                <p class="subtitle">4 Cadetes. 1 Galaxia. ¿Quién dominará?</p>
-            </div>
-            
-            <div class="cadets-preview">
-                <span class="cadet-icon" title="Inferno">🔥</span>
-                <span class="cadet-icon" title="Glacier">❄️</span>
-                <span class="cadet-icon" title="Viper">🐍</span>
-                <span class="cadet-icon" title="Celestial">⭐</span>
-            </div>
-            
-            <button id="start-btn" class="btn-primary">
-                <span class="btn-text">INICIAR BATALLA</span>
-                <span class="btn-shine"></span>
-            </button>
-            
-            <p class="instructions">
-                Toca SPIN para girar • Colecciona gemas • Abre cofres del tesoro
-            </p>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PILUKARTS PRESENTA</p>
+        <h1>BATTLE <span>OF GLORY</span></h1>
+      </div>
+      <button id="sound-btn" class="icon-btn" aria-label="Activar o desactivar sonido">🔊</button>
+    </header>
+
+    <section id="menu" class="panel hero">
+      <div class="hero-copy">
+        <p class="kicker">ARCADE · TÁCTICA · SUPERVIVENCIA</p>
+        <h2>Cuatro mundos.<br>Una sola gloria.</h2>
+        <p>Elige un cadete, domina el tablero y resiste las oleadas del Vacío.</p>
+      </div>
+      <div>
+        <h3>ELIGE TU CADETE</h3>
+        <div id="cadet-grid" class="cadet-grid" aria-label="Selección de personaje"></div>
+        <button id="start-btn" class="primary">ENTRAR EN LA ARENA</button>
+      </div>
+    </section>
+
+    <section id="game" class="game hidden" aria-label="Juego Battle of Glory">
+      <div class="hud">
+        <div><small>CADETE</small><strong id="hud-cadet">—</strong></div>
+        <div><small>PUNTOS</small><strong id="score">0</strong></div>
+        <div><small>OLEADA</small><strong id="wave">1</strong></div>
+        <div><small>VIDA</small><strong id="health">100</strong></div>
+        <div><small>ESPECIAL</small><strong id="special">LISTO</strong></div>
+      </div>
+
+      <div class="arena-wrap">
+        <svg id="arena" viewBox="0 0 960 640" role="img" aria-label="Tablero espacial">
+          <defs>
+            <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+              <path d="M80 0H0V80" fill="none" stroke="#62e6ff" stroke-opacity=".12"/>
+              <circle cx="0" cy="0" r="2" fill="#62e6ff" opacity=".35"/>
+            </pattern>
+            <radialGradient id="space" cx="50%" cy="45%">
+              <stop offset="0" stop-color="#172458"/>
+              <stop offset="1" stop-color="#050715"/>
+            </radialGradient>
+            <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <rect width="960" height="640" rx="24" fill="url(#space)"/>
+          <rect width="960" height="640" rx="24" fill="url(#grid)"/>
+          <g id="stars"></g>
+          <g id="entities"></g>
+        </svg>
+        <div id="message" class="message"></div>
+      </div>
+
+      <div class="controls">
+        <div class="help">
+          <span>← ↑ ↓ → MOVER</span>
+          <span>ESPACIO DISPARAR</span>
+          <span>SHIFT ESPECIAL</span>
         </div>
-        
-        <!-- 🎰 Área de juego (Slots) -->
-        <div id="slot-area" class="screen" style="display: none;">
-            <header class="game-header">
-                <div class="stat-box">
-                    <span class="stat-label">SCORE</span>
-                    <span id="score" class="stat-value">0</span>
-                </div>
-                
-                <div class="stat-box">
-                    <span class="stat-label">WAVE</span>
-                    <span id="wave" class="stat-value">1</span>
-                </div>
-                
-                <div class="stat-box lives-box">
-                    <span class="stat-label">VIDAS</span>
-                    <div id="lives-container">
-                        <span class="skull active">💀</span>
-                        <span class="skull active">💀</span>
-                        <span class="skull active">💀</span>
-                    </div>
-                </div>
-            </header>
-            
-            <!-- Máquina de slots -->
-            <div class="slot-machine">
-                <div class="reels-container">
-                    <div id="reel-0" class="reel"></div>
-                    <div id="reel-1" class="reel"></div>
-                    <div id="reel-2" class="reel"></div>
-                    <div id="reel-3" class="reel"></div>
-                </div>
-                
-                <!-- Líneas de pago (decorativas) -->
-                <div class="payline payline-1"></div>
-                <div class="payline payline-2"></div>
-                <div class="payline payline-3"></div>
-            </div>
-            
-            <!-- Cofre del tesoro -->
-            <div id="chest" class="chest">
-                <div class="chest-body">📦</div>
-                <div class="chest-glow"></div>
-                <div class="chest-particles"></div>
-            </div>
-            
-            <!-- Barra de progreso -->
-            <div class="progress-container">
-                <div class="progress-label">PROGRESO AL COFRE</div>
-                <div class="progress-bar">
-                    <div id="progress-fill" class="progress-fill"></div>
-                </div>
-                <span id="progress-text" class="progress-text">0 / 100</span>
-            </div>
-            
-            <!-- Botón de spin -->
-            <button id="slot-btn" class="btn-spin" disabled>
-                <span class="spin-text">SPIN</span>
-                <span class="spin-cost">-</span>
-            </button>
+        <div class="touch-controls">
+          <div class="dpad">
+            <button data-key="ArrowUp">▲</button>
+            <button data-key="ArrowLeft">◀</button>
+            <button data-key="ArrowDown">▼</button>
+            <button data-key="ArrowRight">▶</button>
+          </div>
+          <button data-key="Space" class="fire">FUEGO</button>
+          <button data-key="ShiftLeft" class="power">PODER</button>
         </div>
-        
-        <!-- 🎁 Pantalla de Bonus -->
-        <div id="bonus-screen" class="screen" style="display: none;">
-            <div class="bonus-header">
-                <h2>🎰 MODO BONUS ACTIVADO 🎰</h2>
-                <div class="bonus-spins-display">
-                    <span class="spins-label">SPINS GRATIS</span>
-                    <span id="bonus-spins" class="spins-count">10</span>
-                </div>
-            </div>
-            
-            <div class="bonus-progress">
-                <p>Progreso: <span id="bonus-progress-text">0 / 100</span></p>
-                <div class="bonus-bar">
-                    <div id="bonus-progress-fill" class="bonus-fill"></div>
-                </div>
-            </div>
-            
-            <p class="bonus-hint">¡Cada giro es gratis! Acumula puntos extra.</p>
-        </div>
-        
-        <!-- 💀 Game Over -->
-        <div id="game-over" class="screen" style="display: none;">
-            <div class="game-over-content">
-                <h2>⚔️ BATALLA TERMINADA ⚔️</h2>
-                
-                <div class="final-score-box">
-                    <span class="final-label">PUNTUACIÓN FINAL</span>
-                    <span id="final-score" class="final-value">0</span>
-                </div>
-                
-                <div class="stats-summary">
-                    <p>Onda alcanzada: <span id="final-wave">1</span></p>
-                    <p>Gemas coleccionadas: <span id="final-gems">0</span></p>
-                </div>
-                
-                <button id="restart-btn" class="btn-primary">
-                    🔄 JUGAR DE NUEVO
-                </button>
-                
-                <button id="share-btn" class="btn-secondary">
-                    📤 COMPARTIR
-                </button>
-            </div>
-        </div>
-        
-        <!-- 🔔 Notificaciones flotantes -->
-        <div id="notification-area"></div>
-        
-        <!-- 🔊 Control de audio -->
-        <button id="audio-toggle" class="audio-btn" title="Activar/Desactivar sonido">
-            🔊
-        </button>
-    </div>
-    
-    <!-- Scripts -->
-    <script src="game.js"></script>
+      </div>
+    </section>
+
+    <section id="game-over" class="panel result hidden">
+      <p class="kicker">MISIÓN TERMINADA</p>
+      <h2 id="result-title">LA GLORIA TE ESPERA</h2>
+      <p>Puntuación final: <strong id="final-score">0</strong></p>
+      <p>Oleada alcanzada: <strong id="final-wave">1</strong></p>
+      <button id="again-btn" class="primary">VOLVER A JUGAR</button>
+    </section>
+  </main>
+  <script src="./game.js"></script>
 </body>
 </html>
