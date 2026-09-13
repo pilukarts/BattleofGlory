@@ -6,9 +6,19 @@
   <meta name="theme-color" content="#070b1c">
   <meta name="description" content="Battle of Glory: arena táctica espacial">
   <title>Battle of Glory</title>
-  <link rel="manifest" href="./manifest.json">
+  <link rel="manifest" href="./manifest.json?v=3">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style.css?v=3">
+  <script>
+    // Retira la caché de la demo anterior para evitar mezclar versiones.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations()
+        .then(registrations => Promise.all(registrations.map(registration => registration.unregister())))
+        .then(() => caches.keys())
+        .then(names => Promise.all(names.map(name => caches.delete(name))))
+        .catch(() => {});
+    }
+  </script>
 </head>
 <body>
   <main class="shell">
@@ -90,6 +100,6 @@
       <button id="again-btn" class="primary">VOLVER A JUGAR</button>
     </section>
   </main>
-  <script src="./game.js"></script>
+  <script src="./game.js?v=3"></script>
 </body>
 </html>
