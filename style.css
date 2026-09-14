@@ -108,3 +108,9 @@ html.telegram .topbar{position:relative;z-index:4}
 @keyframes enginePulse{from{opacity:.45}to{opacity:1}}
 .player-ship,.enemy-ship{transform-box:fill-box;transform-origin:center}
 @media(prefers-reduced-motion:reduce){.space-star,.engine-flame{animation:none!important}}
+
+
+/* Rotating wave missions */
+.hud{grid-template-columns:1.25fr repeat(5,.8fr) 1.4fr}.objective-cell{border-color:#725dff88!important;background:linear-gradient(135deg,#151642,#0b122b)!important}.objective-cell strong{color:#d6b8ff!important;text-shadow:0 0 12px #9f69ff;font-size:.72rem}.commander{filter:drop-shadow(0 0 12px #ffb347) drop-shadow(0 0 28px #ff5475)}.commander .monster-label{fill:#ffd36e}
+@media(max-width:960px){.hud{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:600px){.hud{grid-template-columns:repeat(2,1fr)}.objective-cell{grid-column:span 2}}

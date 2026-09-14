@@ -23,11 +23,12 @@ const cadets = [
   {id:'celestial',name:'CELESTIAL',icon:'⭐',color:'#c27aff',planet:'ASTRA',power:'Pulso cósmico',welcome:'Las estrellas han marcado nuestro camino.',speed:315,damage:3}
 ];
 
-const dom = Object.fromEntries(['menu','game','game-over','cadet-grid','start-btn','again-btn','arena','entities','stars','message','score','wave','health','special','hud-cadet','final-score','final-wave','result-title','sound-btn','bonus','welcome','welcome-avatar','welcome-title','welcome-copy'].map(id => [id.replaceAll('-','_'), document.getElementById(id)]));
+const dom = Object.fromEntries(['menu','game','game-over','cadet-grid','start-btn','again-btn','arena','entities','stars','message','score','wave','health','special','hud-cadet','final-score','final-wave','result-title','sound-btn','bonus','objective','welcome','welcome-avatar','welcome-title','welcome-copy'].map(id => [id.replaceAll('-','_'), document.getElementById(id)]));
 const keys = new Set();
 let selected = cadets[0], player, enemies=[], bullets=[], particles=[];
 let playing=false, score=0, wave=1, specialReady=true, last=0, nextWaveTimer=0, muted=false, audio;
 let pickups=[], activeBonus=null, bonusUntil=0, bonusRound=false;
+let mission='purge',missionProgress=0,missionGoal=0,missionDeadline=0,missionRewarded=false;
 const monsterTypes={
   drone:{label:'DRON',color:'#ff5475',hp:1,speed:1,score:50,size:19},
   hunter:{label:'CAZADOR',color:'#ffb347',hp:2,speed:1.55,score:90,size:16},
@@ -158,20 +159,50 @@ function showWelcome(onComplete){
 }
 
 function spawnWave(){
-  bonusRound=wave%3===0;
-  if(bonusRound) announce('💎 TORMENTA DE CRISTALES 💎');
-  const count=(bonusRound?5:3)+wave*2;
+  const rotation=['purge','hunt','crystals','survive'];
+  mission=rotation[(wave-1)%rotation.length];
+  missionProgress=0;missionRewarded=false;missionDeadline=0;
+  bonusRound=mission==='crystals';
+  const count=(bonusRound?6:4)+wave*2;
+  missionGoal=mission==='purge'?count:mission==='hunt'?1:mission==='crystals'?3:12;
+  if(mission==='survive')missionDeadline=performance.now()+missionGoal*1000;
+  updateObjective();
+  announce(mission==='purge'?'⚔️ ELIMINA LA FLOTA':mission==='hunt'?'🎯 CAZA AL COMANDANTE':mission==='crystals'?'💎 RESCATA 3 CRISTALES':'🛡️ SOBREVIVE 12 SEGUNDOS');
   for(let i=0;i<count;i++){
     const edge=Math.floor(Math.random()*3);
     const roll=Math.random();
-    const type=wave>=4&&roll<.2?'tank':wave>=2&&roll<.48?'hunter':'drone';
+    const commander=mission==='hunt'&&i===0;
+    const type=commander?'tank':wave>=4&&roll<.2?'tank':wave>=2&&roll<.48?'hunter':'drone';
     const m=monsterTypes[type];
-    const e={type,x:edge===0?30:edge===1?W-30:60+Math.random()*(W-120),y:edge===2?35:50+Math.random()*260,hp:m.hp+Math.floor(wave/5),speed:(68+wave*7)*m.speed,node:enemyNode(type),hitAt:0};
-    dom.entities.append(e.node); position(e); enemies.push(e);
+    const e={type,commander,x:edge===0?30:edge===1?W-30:60+Math.random()*(W-120),y:edge===2?35:50+Math.random()*260,hp:(m.hp+Math.floor(wave/5))*(commander?3:1),speed:(68+wave*7)*m.speed*(commander?.78:1),node:enemyNode(type),hitAt:0};
+    if(commander){e.node.classList.add('commander');const label=e.node.querySelector('text');if(label)label.textContent='COMANDANTE'}
+    dom.entities.append(e.node);position(e);enemies.push(e);
   }
   if(bonusRound){
-    for(let i=0;i<8;i++) dropBonus(90+Math.random()*(W-180),90+Math.random()*(H-180),i%2?'rapid':'triple');
+    for(let i=0;i<6;i++)dropBonus(90+Math.random()*(W-180),90+Math.random()*(H-180),i%2?'rapid':'triple');
   }
+}
+
+function updateObjective(now=performance.now()){
+  if(!dom.objective)return;
+  if(missionRewarded){dom.objective.textContent='COMPLETADO +250';return}
+  if(mission==='survive'){
+    const left=Math.max(0,Math.ceil((missionDeadline-now)/1000));
+    dom.objective.textContent='RESISTE '+left+'s';return;
+  }
+  const labels={purge:'FLOTA',hunt:'COMANDANTE',crystals:'CRISTALES'};
+  dom.objective.textContent=labels[mission]+' '+Math.min(missionProgress,missionGoal)+'/'+missionGoal;
+}
+
+function checkMission(now){
+  if(missionRewarded)return;
+  if(mission==='survive')missionProgress=Math.min(missionGoal,Math.max(0,missionGoal-Math.ceil((missionDeadline-now)/1000)));
+  const complete=mission==='survive'?now>=missionDeadline:missionProgress>=missionGoal;
+  updateObjective(now);
+  if(!complete)return;
+  missionRewarded=true;gainScore(250,player.x,player.y-35);announce('MISIÓN CUMPLIDA · +250');
+  haptic('heavy');updateObjective(now);
+  if(mission==='survive')enemies.forEach(e=>e.dead=true);
 }
 
 function fire(){
@@ -209,8 +240,8 @@ function special(){
 function loop(now){
   if(!playing)return;
   const dt=Math.min((now-last)/1000,.035); last=now;
-  updatePlayer(dt); updateBullets(dt); updateEnemies(dt,now); updatePickups(now); cleanup();
-  if(enemies.length===0){
+  updatePlayer(dt); updateBullets(dt); updateEnemies(dt,now); updatePickups(now); checkMission(now); cleanup();
+  if(missionRewarded && enemies.length===0){
     nextWaveTimer+=dt;
     if(nextWaveTimer>.65){wave++;nextWaveTimer=0;announce('OLEADA '+wave);spawnWave();}
   }
@@ -250,6 +281,8 @@ function updateEnemies(dt,now){
     }
     if(e.hp<=0){
       e.dead=true;
+      if(mission==='purge')missionProgress++;
+      if(mission==='hunt'&&e.commander)missionProgress=1;
       gainScore(monsterTypes[e.type].score,e.x,e.y);
       burst(e.x,e.y,monsterTypes[e.type].color);
       const chance=bonusRound?.45:.14;
@@ -279,7 +312,7 @@ function dropBonus(x,y,forced){
 function updatePickups(now){
   pickups.forEach(p=>{
     if(Math.hypot(p.x-player.x,p.y-player.y)<38){
-      p.dead=true;gainScore(100,p.x,p.y);activateBonus(p.type);haptic('medium');tone(920,.12);
+      p.dead=true;if(mission==='crystals'&&!missionRewarded)missionProgress++;gainScore(100,p.x,p.y);activateBonus(p.type);haptic('medium');tone(920,.12);
     }
     if(now-p.created>12000)p.dead=true;
   });
