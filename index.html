@@ -8,7 +8,7 @@
   <title>Battle of Glory</title>
   <link rel="manifest" href="./manifest.json?v=3">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=8">
+  <link rel="stylesheet" href="./style.css?v=9">
   <script>
     // Retira la caché de la demo anterior para evitar mezclar versiones.
     if ('serviceWorker' in navigator) {
@@ -21,7 +21,14 @@
   </script>
 </head>
 <body>
-  <div class="cosmos" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
+  <div id="boot-screen" class="boot-screen" aria-label="Cargando Battle of Glory">
+    <div class="boot-orbit"><i></i><i></i><i></i></div>
+    <p>PILUKARTS PRESENTA</p>
+    <div class="battle-logo"><span>BATTLE</span><b>OF GLORY</b></div>
+    <div class="boot-line"><i></i></div>
+    <small>INICIANDO SISTEMA DE COMBATE</small>
+  </div>
+  <div class="cosmos" aria-hidden="true"><i></i><i></i><i></i><span></span><div class="galaxy"></div><div class="flyby-ship"><b></b></div></div>
   <main class="shell">
     <header class="topbar">
       <div>
@@ -118,6 +125,6 @@
     </section>
   </main>
   <footer class="footer"><span>© PILUKARTS</span><span>DISEÑADO PARA LA GLORIA</span></footer>
-  <script src="./game.js?v=7"></script>
+  <script src="./game.js?v=8"></script>
 </body>
 </html>

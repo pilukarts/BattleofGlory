@@ -32,12 +32,32 @@ function svg(tag, attrs={}) {
   return node;
 }
 
+function getBest(id){return Number(localStorage.getItem('bog-best-'+id)||0)}
+
+function saveBest(){
+  const best=getBest(selected.id);
+  if(score>best){
+    localStorage.setItem('bog-best-'+selected.id,String(score));
+    const label=document.querySelector('[data-best="'+selected.id+'"]');
+    if(label)label.textContent=score;
+  }
+}
+
+function gainScore(amount,x,y){
+  score+=amount;
+  if(x==null||y==null)return;
+  const popup=svg('text',{x,y,class:'score-popup','text-anchor':'middle'});
+  popup.textContent='+'+amount;
+  dom.entities.append(popup);
+  popup.animate([{transform:'translateY(0) scale(.7)',opacity:0},{transform:'translateY(-18px) scale(1.15)',opacity:1,offset:.28},{transform:'translateY(-58px) scale(1)',opacity:0}],{duration:900,easing:'ease-out'}).onfinish=()=>popup.remove();
+}
+
 function setupMenu(){
   cadets.forEach((c,i)=>{
     const button=document.createElement('button');
     button.className='cadet'+(i===0?' selected':'');
     button.style.setProperty('--cadet',c.color);
-    button.innerHTML=`<span class="cadet-portrait" style="--portrait-index:${i}" role="img" aria-label="${c.name}"></span><strong>${c.name}</strong><small>${c.power}</small><small class="cadet-planet">PLANETA ${c.planet}</small>`;
+    button.innerHTML=`<span class="cadet-portrait" style="--portrait-index:${i}" role="img" aria-label="${c.name}"><img src="assets/cadets.png" alt=""></span><strong>${c.name}</strong><small>${c.power}</small><small class="cadet-planet">PLANETA ${c.planet}</small><small class="cadet-score">RÉCORD <b data-best="${c.id}">${getBest(c.id)}</b></small>`;
     button.onclick=()=>{
       selected=c;
       document.querySelectorAll('.cadet').forEach(x=>x.classList.remove('selected'));
@@ -96,7 +116,7 @@ function startGame(){
 
 function showWelcome(onComplete){
   dom.welcome.style.setProperty('--welcome-color',selected.color);
-  dom.welcome_avatar.textContent='';
+  dom.welcome_avatar.innerHTML='<img src="assets/cadets.png" alt="">';
   dom.welcome_avatar.style.setProperty('--portrait-index',cadets.indexOf(selected));
   dom.welcome_avatar.setAttribute('aria-label',selected.name);
   dom.welcome_title.textContent=selected.name+' · LISTO';
@@ -184,7 +204,7 @@ function updateBullets(dt){
     b.x+=b.vx*dt;b.y+=b.vy*dt;
     b.node.setAttribute('cx',b.x);b.node.setAttribute('cy',b.y);
     enemies.forEach(e=>{
-      if(!b.dead && Math.hypot(e.x-b.x,e.y-b.y)<25){e.hp-=b.damage;b.dead=true;score+=10}
+      if(!b.dead && Math.hypot(e.x-b.x,e.y-b.y)<25){e.hp-=b.damage;b.dead=true;gainScore(10,b.x,b.y)}
     });
     if(b.x<0||b.x>W||b.y<0||b.y>H)b.dead=true;
   });
@@ -201,7 +221,7 @@ function updateEnemies(dt,now){
     }
     if(e.hp<=0){
       e.dead=true;
-      score+=monsterTypes[e.type].score;
+      gainScore(monsterTypes[e.type].score,e.x,e.y);
       burst(e.x,e.y,monsterTypes[e.type].color);
       const chance=bonusRound?.45:.14;
       if(Math.random()<chance)dropBonus(e.x,e.y);
@@ -230,7 +250,7 @@ function dropBonus(x,y,forced){
 function updatePickups(now){
   pickups.forEach(p=>{
     if(Math.hypot(p.x-player.x,p.y-player.y)<38){
-      p.dead=true;score+=100;activateBonus(p.type);tone(920,.12);
+      p.dead=true;gainScore(100,p.x,p.y);activateBonus(p.type);tone(920,.12);
     }
     if(now-p.created>12000)p.dead=true;
   });
@@ -261,6 +281,7 @@ function announce(text){
 
 function endGame(){
   playing=false;
+  saveBest();
   dom.game.classList.add('hidden');dom.game_over.classList.remove('hidden');
   dom.final_score.textContent=score;dom.final_wave.textContent=wave;
   dom.result_title.textContent=wave>=8?'¡GLORIA CONQUISTADA!':'EL VACÍO VENCIÓ ESTA VEZ';
@@ -281,3 +302,5 @@ dom.start_btn.onclick=startGame;
 dom.again_btn.onclick=()=>{dom.game_over.classList.add('hidden');dom.menu.classList.remove('hidden')};
 dom.sound_btn.onclick=()=>{muted=!muted;dom.sound_btn.textContent=muted?'🔇':'🔊'};
 setupMenu();makeStars();
+
+window.addEventListener('load',()=>setTimeout(()=>document.getElementById('boot-screen')?.classList.add('boot-done'),900));
