@@ -114,3 +114,7 @@ html.telegram .topbar{position:relative;z-index:4}
 .hud{grid-template-columns:1.25fr repeat(5,.8fr) 1.4fr}.objective-cell{border-color:#725dff88!important;background:linear-gradient(135deg,#151642,#0b122b)!important}.objective-cell strong{color:#d6b8ff!important;text-shadow:0 0 12px #9f69ff;font-size:.72rem}.commander{filter:drop-shadow(0 0 12px #ffb347) drop-shadow(0 0 28px #ff5475)}.commander .monster-label{fill:#ffd36e}
 @media(max-width:960px){.hud{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:600px){.hud{grid-template-columns:repeat(2,1fr)}.objective-cell{grid-column:span 2}}
+
+
+/* Language switch */
+.lang-btn{min-width:42px;height:36px;padding:0 10px;border:1px solid #546b9b;background:#0d1534;color:#9feeff;border-radius:999px;font:700 .64rem Oxanium,sans-serif;letter-spacing:.1em;cursor:pointer;transition:.2s}.lang-btn:hover{border-color:var(--cyan);box-shadow:0 0 16px #62e6ff44;transform:translateY(-1px)}

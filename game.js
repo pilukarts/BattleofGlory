@@ -14,13 +14,31 @@ function haptic(type='light'){
   try{telegram?.HapticFeedback?.impactOccurred(type)}catch{}
 }
 
+const translations={
+  es:{presents:'PILUKARTS PRESENTA',boot:'INICIANDO SISTEMA DE COMBATE',online:'SISTEMA ONLINE',genres:'ARCADE · TÁCTICA · SUPERVIVENCIA',heroTitle:'Cuatro mundos.<br>Una sola gloria.',heroCopy:'Elige un cadete, domina el tablero y resiste las oleadas del Vacío.',waves:'OLEADAS',heroes:'HÉROES',destiny:'DESTINO',choose:'ELIGE TU CADETE',preparation:'01 / PREPARACIÓN',enter:'ENTRAR EN LA ARENA',cadet:'CADETE',points:'PUNTOS',wave:'OLEADA',health:'VIDA',special:'ESPECIAL',bonus:'BONUS',objective:'OBJETIVO',incoming:'TRANSMISIÓN ENTRANTE',move:'← ↑ ↓ → MOVER',shoot:'ESPACIO DISPARAR',shiftSpecial:'SHIFT ESPECIAL',fire:'FUEGO',power:'PODER',missionOver:'MISIÓN TERMINADA',finalScore:'Puntuación final',waveReached:'Oleada alcanzada',playAgain:'VOLVER A JUGAR',madeForGlory:'DISEÑADO PARA LA GLORIA',record:'RÉCORD',planet:'PLANETA',ready:'LISTO',loading:'CARGANDO',missionComplete:'MISIÓN CUMPLIDA',completed:'COMPLETADO',fleet:'FLOTA',commander:'COMANDANTE',crystals:'CRISTALES',hold:'RESISTE',defeat:'EL VACÍO VENCIÓ ESTA VEZ',victory:'¡GLORIA CONQUISTADA!',waveCall:'OLEADA',purgeCall:'⚔️ ELIMINA LA FLOTA',huntCall:'🎯 CAZA AL COMANDANTE',crystalCall:'💎 RESCATA 3 CRISTALES',surviveCall:'🛡️ SOBREVIVE 12 SEGUNDOS'},
+  en:{presents:'PILUKARTS PRESENTS',boot:'INITIALIZING COMBAT SYSTEM',online:'SYSTEM ONLINE',genres:'ARCADE · TACTICS · SURVIVAL',heroTitle:'Four worlds.<br>One glory.',heroCopy:'Choose a cadet, master the battlefield and survive the waves of the Void.',waves:'WAVES',heroes:'HEROES',destiny:'DESTINY',choose:'CHOOSE YOUR CADET',preparation:'01 / PREPARATION',enter:'ENTER THE ARENA',cadet:'CADET',points:'SCORE',wave:'WAVE',health:'HEALTH',special:'SPECIAL',bonus:'BONUS',objective:'OBJECTIVE',incoming:'INCOMING TRANSMISSION',move:'← ↑ ↓ → MOVE',shoot:'SPACE SHOOT',shiftSpecial:'SHIFT SPECIAL',fire:'FIRE',power:'POWER',missionOver:'MISSION COMPLETE',finalScore:'Final score',waveReached:'Wave reached',playAgain:'PLAY AGAIN',madeForGlory:'BUILT FOR GLORY',record:'BEST',planet:'PLANET',ready:'READY',loading:'CHARGING',missionComplete:'MISSION COMPLETE',completed:'COMPLETED',fleet:'FLEET',commander:'COMMANDER',crystals:'CRYSTALS',hold:'HOLD',defeat:'THE VOID WON THIS TIME',victory:'GLORY CONQUERED!',waveCall:'WAVE',purgeCall:'⚔️ DESTROY THE FLEET',huntCall:'🎯 HUNT THE COMMANDER',crystalCall:'💎 RESCUE 3 CRYSTALS',surviveCall:'🛡️ SURVIVE 12 SECONDS'}
+};
+const detectedLanguage=telegram?.initDataUnsafe?.user?.language_code||navigator.language||'es';
+let language=localStorage.getItem('bog-language')||(detectedLanguage.toLowerCase().startsWith('es')?'es':'en');
+function t(key){return translations[language][key]||key}
+function localized(value){return typeof value==='string'?value:value[language]||value.es}
+function applyLanguage(){
+  document.documentElement.lang=language;
+  document.querySelectorAll('[data-i18n]').forEach(node=>node.textContent=t(node.dataset.i18n));
+  document.querySelectorAll('[data-i18n-html]').forEach(node=>node.innerHTML=t(node.dataset.i18nHtml));
+  const button=document.getElementById('lang-btn');if(button)button.textContent=language==='es'?'EN':'ES';
+  if(dom?.cadet_grid){const selectedId=selected?.id;dom.cadet_grid.replaceChildren();setupMenu();selected=cadets.find(c=>c.id===selectedId)||cadets[0];document.querySelectorAll('.cadet').forEach((node,i)=>node.classList.toggle('selected',cadets[i].id===selected.id));}
+  updateObjective?.();
+}
+function toggleLanguage(){language=language==='es'?'en':'es';localStorage.setItem('bog-language',language);applyLanguage()}
+
 const NS = 'http://www.w3.org/2000/svg';
 const W = 960, H = 640;
 const cadets = [
-  {id:'inferno',name:'INFERNO',icon:'🔥',color:'#ff604b',planet:'PYRA',power:'Nova explosiva',welcome:'El fuego de Pyra luchará contigo.',speed:330,damage:2},
-  {id:'glacier',name:'GLACIER',icon:'❄️',color:'#65ddff',planet:'NIVALIS',power:'Congelación total',welcome:'Mantén la calma. Nivalis nos protege.',speed:300,damage:2},
-  {id:'viper',name:'VIPER',icon:'🐍',color:'#6eff7d',planet:'VERDANT',power:'Ráfaga venenosa',welcome:'Velocidad, precisión y victoria.',speed:370,damage:1},
-  {id:'celestial',name:'CELESTIAL',icon:'⭐',color:'#c27aff',planet:'ASTRA',power:'Pulso cósmico',welcome:'Las estrellas han marcado nuestro camino.',speed:315,damage:3}
+  {id:'inferno',name:'INFERNO',icon:'🔥',color:'#ff604b',planet:'PYRA',power:{es:'Nova explosiva',en:'Explosive nova'},welcome:{es:'El fuego de Pyra luchará contigo.',en:'The fire of Pyra will fight beside you.'},speed:330,damage:2},
+  {id:'glacier',name:'GLACIER',icon:'❄️',color:'#65ddff',planet:'NIVALIS',power:{es:'Congelación total',en:'Total freeze'},welcome:{es:'Mantén la calma. Nivalis nos protege.',en:'Stay calm. Nivalis protects us.'},speed:300,damage:2},
+  {id:'viper',name:'VIPER',icon:'🐍',color:'#6eff7d',planet:'VERDANT',power:{es:'Ráfaga venenosa',en:'Venom burst'},welcome:{es:'Velocidad, precisión y victoria.',en:'Speed, precision and victory.'},speed:370,damage:1},
+  {id:'celestial',name:'CELESTIAL',icon:'⭐',color:'#c27aff',planet:'ASTRA',power:{es:'Pulso cósmico',en:'Cosmic pulse'},welcome:{es:'Las estrellas han marcado nuestro camino.',en:'The stars have marked our path.'},speed:315,damage:3}
 ];
 
 const dom = Object.fromEntries(['menu','game','game-over','cadet-grid','start-btn','again-btn','arena','entities','stars','message','score','wave','health','special','hud-cadet','final-score','final-wave','result-title','sound-btn','bonus','objective','welcome','welcome-avatar','welcome-title','welcome-copy'].map(id => [id.replaceAll('-','_'), document.getElementById(id)]));
@@ -72,7 +90,7 @@ function setupMenu(){
     const button=document.createElement('button');
     button.className='cadet'+(i===0?' selected':'');
     button.style.setProperty('--cadet',c.color);
-    button.innerHTML=`<span class="cadet-portrait" style="--portrait-index:${i}" role="img" aria-label="${c.name}"><img src="assets/cadets.png" alt=""></span><strong>${c.name}</strong><small>${c.power}</small><small class="cadet-planet">PLANETA ${c.planet}</small><small class="cadet-score">RÉCORD <b data-best="${c.id}">${getBest(c.id)}</b></small>`;
+    button.innerHTML=`<span class="cadet-portrait" style="--portrait-index:${i}" role="img" aria-label="${c.name}"><img src="assets/cadets.png" alt=""></span><strong>${c.name}</strong><small>${localized(c.power)}</small><small class="cadet-planet">${t('planet')} ${c.planet}</small><small class="cadet-score">${t('record')} <b data-best="${c.id}">${getBest(c.id)}</b></small>`;
     button.onclick=()=>{
       selected=c;
       document.querySelectorAll('.cadet').forEach(x=>x.classList.remove('selected'));
@@ -138,7 +156,7 @@ function startGame(){
   updateHud();
   showWelcome(()=>{
     playing=true; last=performance.now();
-    announce('OLEADA 1'); spawnWave(); requestAnimationFrame(loop);
+    announce(t('waveCall')+' 1'); spawnWave(); requestAnimationFrame(loop);
   });
 }
 
@@ -147,8 +165,8 @@ function showWelcome(onComplete){
   dom.welcome_avatar.innerHTML='<img src="assets/cadets.png" alt="">';
   dom.welcome_avatar.style.setProperty('--portrait-index',cadets.indexOf(selected));
   dom.welcome_avatar.setAttribute('aria-label',selected.name);
-  dom.welcome_title.textContent=selected.name+' · LISTO';
-  dom.welcome_copy.textContent=selected.welcome;
+  dom.welcome_title.textContent=selected.name+' · '+t('ready');
+  dom.welcome_copy.textContent=localized(selected.welcome);
   dom.welcome.classList.remove('hidden','exit');
   tone(240,.18);
   setTimeout(()=>tone(520,.2),250);
@@ -167,7 +185,7 @@ function spawnWave(){
   missionGoal=mission==='purge'?count:mission==='hunt'?1:mission==='crystals'?3:12;
   if(mission==='survive')missionDeadline=performance.now()+missionGoal*1000;
   updateObjective();
-  announce(mission==='purge'?'⚔️ ELIMINA LA FLOTA':mission==='hunt'?'🎯 CAZA AL COMANDANTE':mission==='crystals'?'💎 RESCATA 3 CRISTALES':'🛡️ SOBREVIVE 12 SEGUNDOS');
+  announce(mission==='purge'?t('purgeCall'):mission==='hunt'?t('huntCall'):mission==='crystals'?t('crystalCall'):t('surviveCall'));
   for(let i=0;i<count;i++){
     const edge=Math.floor(Math.random()*3);
     const roll=Math.random();
@@ -175,7 +193,7 @@ function spawnWave(){
     const type=commander?'tank':wave>=4&&roll<.2?'tank':wave>=2&&roll<.48?'hunter':'drone';
     const m=monsterTypes[type];
     const e={type,commander,x:edge===0?30:edge===1?W-30:60+Math.random()*(W-120),y:edge===2?35:50+Math.random()*260,hp:(m.hp+Math.floor(wave/5))*(commander?3:1),speed:(68+wave*7)*m.speed*(commander?.78:1),node:enemyNode(type),hitAt:0};
-    if(commander){e.node.classList.add('commander');const label=e.node.querySelector('text');if(label)label.textContent='COMANDANTE'}
+    if(commander){e.node.classList.add('commander');const label=e.node.querySelector('text');if(label)label.textContent=t('commander')}
     dom.entities.append(e.node);position(e);enemies.push(e);
   }
   if(bonusRound){
@@ -185,12 +203,12 @@ function spawnWave(){
 
 function updateObjective(now=performance.now()){
   if(!dom.objective)return;
-  if(missionRewarded){dom.objective.textContent='COMPLETADO +250';return}
+  if(missionRewarded){dom.objective.textContent=t('completed')+' +250';return}
   if(mission==='survive'){
     const left=Math.max(0,Math.ceil((missionDeadline-now)/1000));
-    dom.objective.textContent='RESISTE '+left+'s';return;
+    dom.objective.textContent=t('hold')+' '+left+'s';return;
   }
-  const labels={purge:'FLOTA',hunt:'COMANDANTE',crystals:'CRISTALES'};
+  const labels={purge:t('fleet'),hunt:t('commander'),crystals:t('crystals')};
   dom.objective.textContent=labels[mission]+' '+Math.min(missionProgress,missionGoal)+'/'+missionGoal;
 }
 
@@ -200,7 +218,7 @@ function checkMission(now){
   const complete=mission==='survive'?now>=missionDeadline:missionProgress>=missionGoal;
   updateObjective(now);
   if(!complete)return;
-  missionRewarded=true;gainScore(250,player.x,player.y-35);announce('MISIÓN CUMPLIDA · +250');
+  missionRewarded=true;gainScore(250,player.x,player.y-35);announce(t('missionComplete')+' · +250');
   haptic('heavy');updateObjective(now);
   if(mission==='survive')enemies.forEach(e=>e.dead=true);
 }
@@ -223,7 +241,7 @@ function fire(){
 function special(){
   if(!playing || !specialReady)return;
   haptic('heavy');
-  specialReady=false; dom.special.textContent='CARGANDO';
+  specialReady=false; dom.special.textContent=t('loading');
   tone(180,.28);
   enemies.forEach(e=>{
     const d=Math.hypot(e.x-player.x,e.y-player.y);
@@ -234,7 +252,7 @@ function special(){
   const ring=svg('circle',{cx:player.x,cy:player.y,r:10,fill:'none',stroke:selected.color,'stroke-width':10,opacity:.9});
   dom.entities.prepend(ring);
   ring.animate([{r:10,opacity:1},{r:300,opacity:0}],{duration:650,easing:'ease-out'}).onfinish=()=>ring.remove();
-  setTimeout(()=>{specialReady=true;dom.special.textContent='LISTO'},7000);
+  setTimeout(()=>{specialReady=true;dom.special.textContent=t('ready')},7000);
 }
 
 function loop(now){
@@ -243,7 +261,7 @@ function loop(now){
   updatePlayer(dt); updateBullets(dt); updateEnemies(dt,now); updatePickups(now); checkMission(now); cleanup();
   if(missionRewarded && enemies.length===0){
     nextWaveTimer+=dt;
-    if(nextWaveTimer>.65){wave++;nextWaveTimer=0;announce('OLEADA '+wave);spawnWave();}
+    if(nextWaveTimer>.65){wave++;nextWaveTimer=0;announce(t('waveCall')+' '+wave);spawnWave();}
   }
   updateHud();
   requestAnimationFrame(loop);
@@ -346,7 +364,7 @@ function endGame(){
   saveBest();
   dom.game.classList.add('hidden');dom.game_over.classList.remove('hidden');
   dom.final_score.textContent=score;dom.final_wave.textContent=wave;
-  dom.result_title.textContent=wave>=8?'¡GLORIA CONQUISTADA!':'EL VACÍO VENCIÓ ESTA VEZ';
+  dom.result_title.textContent=wave>=8?t('victory'):t('defeat');
 }
 
 function initAudio(){if(!audio)try{audio=new (window.AudioContext||window.webkitAudioContext)()}catch{}}
@@ -363,6 +381,6 @@ document.querySelectorAll('[data-key]').forEach(btn=>{
 dom.start_btn.onclick=startGame;
 dom.again_btn.onclick=()=>{dom.game_over.classList.add('hidden');dom.menu.classList.remove('hidden')};
 dom.sound_btn.onclick=()=>{muted=!muted;dom.sound_btn.textContent=muted?'🔇':'🔊'};
-setupMenu();makeStars();
+setupMenu();makeStars();applyLanguage();document.getElementById('lang-btn')?.addEventListener('click',toggleLanguage);
 
 window.addEventListener('load',()=>setTimeout(()=>document.getElementById('boot-screen')?.classList.add('boot-done'),450));

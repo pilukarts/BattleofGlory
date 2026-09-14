@@ -8,7 +8,7 @@
   <title>Battle of Glory</title>
   <link rel="manifest" href="./manifest.json?v=3">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=14">
+  <link rel="stylesheet" href="./style.css?v=15">
   <script src="https://telegram.org/js/telegram-web-app.js?63"></script>
   <script>
     // Retira la caché de la demo anterior para evitar mezclar versiones.
@@ -24,51 +24,52 @@
 <body>
   <div id="boot-screen" class="boot-screen" aria-label="Cargando Battle of Glory">
     <div class="boot-orbit"><i></i><i></i><i></i></div>
-    <p>PILUKARTS PRESENTA</p>
+    <p data-i18n="presents">PILUKARTS PRESENTA</p>
     <div class="battle-logo"><span>BATTLE</span><b>OF GLORY</b></div>
     <div class="boot-line"><i></i></div>
-    <small>INICIANDO SISTEMA DE COMBATE</small>
+    <small data-i18n="boot">INICIANDO SISTEMA DE COMBATE</small>
   </div>
   <div class="cosmos" aria-hidden="true"><i></i><i></i><i></i><span></span><div class="galaxy"></div><div class="flyby-ship"><b></b></div></div>
   <main class="shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">PILUKARTS PRESENTA</p>
+        <p class="eyebrow" data-i18n="presents">PILUKARTS PRESENTA</p>
         <h1>BATTLE <span>OF GLORY</span></h1>
       </div>
       <div class="top-actions">
-        <span class="online-badge"><i></i> SISTEMA ONLINE</span>
+        <span class="online-badge"><i></i> <span data-i18n="online">SISTEMA ONLINE</span></span>
+        <button id="lang-btn" class="lang-btn" aria-label="Cambiar idioma">ES</button>
         <button id="sound-btn" class="icon-btn" aria-label="Activar o desactivar sonido">🔊</button>
       </div>
     </header>
 
     <section id="menu" class="panel hero">
       <div class="hero-copy">
-        <p class="kicker">ARCADE · TÁCTICA · SUPERVIVENCIA</p>
-        <h2>Cuatro mundos.<br>Una sola gloria.</h2>
-        <p>Elige un cadete, domina el tablero y resiste las oleadas del Vacío.</p>
+        <p class="kicker" data-i18n="genres">ARCADE · TÁCTICA · SUPERVIVENCIA</p>
+        <h2 data-i18n-html="heroTitle">Cuatro mundos.<br>Una sola gloria.</h2>
+        <p data-i18n="heroCopy">Elige un cadete, domina el tablero y resiste las oleadas del Vacío.</p>
         <div class="mission-stats" aria-label="Características de la misión">
-          <span><b>∞</b> OLEADAS</span>
-          <span><b>4</b> HÉROES</span>
-          <span><b>1</b> DESTINO</span>
+          <span><b>∞</b> <span data-i18n="waves">OLEADAS</span></span>
+          <span><b>4</b> <span data-i18n="heroes">HÉROES</span></span>
+          <span><b>1</b> <span data-i18n="destiny">DESTINO</span></span>
         </div>
       </div>
       <div>
-        <div class="selector-head"><h3>ELIGE TU CADETE</h3><span>01 / PREPARACIÓN</span></div>
+        <div class="selector-head"><h3 data-i18n="choose">ELIGE TU CADETE</h3><span data-i18n="preparation">01 / PREPARACIÓN</span></div>
         <div id="cadet-grid" class="cadet-grid" aria-label="Selección de personaje"></div>
-        <button id="start-btn" class="primary">ENTRAR EN LA ARENA</button>
+        <button id="start-btn" class="primary" data-i18n="enter">ENTRAR EN LA ARENA</button>
       </div>
     </section>
 
     <section id="game" class="game hidden" aria-label="Juego Battle of Glory">
       <div class="hud">
-        <div><small>CADETE</small><strong id="hud-cadet">—</strong></div>
-        <div><small>PUNTOS</small><strong id="score">0</strong></div>
-        <div><small>OLEADA</small><strong id="wave">1</strong></div>
-        <div><small>VIDA</small><strong id="health">100</strong></div>
-        <div><small>ESPECIAL</small><strong id="special">LISTO</strong></div>
-        <div><small>BONUS</small><strong id="bonus">—</strong></div>
-        <div class="objective-cell"><small>OBJETIVO</small><strong id="objective">FLOTA 0/0</strong></div>
+        <div><small data-i18n="cadet">CADETE</small><strong id="hud-cadet">—</strong></div>
+        <div><small data-i18n="points">PUNTOS</small><strong id="score">0</strong></div>
+        <div><small data-i18n="wave">OLEADA</small><strong id="wave">1</strong></div>
+        <div><small data-i18n="health">VIDA</small><strong id="health">100</strong></div>
+        <div><small data-i18n="special">ESPECIAL</small><strong id="special">LISTO</strong></div>
+        <div><small data-i18n="bonus">BONUS</small><strong id="bonus">—</strong></div>
+        <div class="objective-cell"><small data-i18n="objective">OBJETIVO</small><strong id="objective">FLOTA 0/0</strong></div>
       </div>
 
       <div class="arena-wrap">
@@ -93,7 +94,7 @@
         <div id="welcome" class="welcome hidden" aria-live="polite">
           <div class="portal-rings"><i></i><i></i><i></i></div>
           <div id="welcome-avatar" class="welcome-avatar"></div>
-          <p>TRANSMISIÓN ENTRANTE</p>
+          <p data-i18n="incoming">TRANSMISIÓN ENTRANTE</p>
           <h2 id="welcome-title">CADETE LISTO</h2>
           <span id="welcome-copy">La gloria nos espera.</span>
         </div>
@@ -101,9 +102,9 @@
 
       <div class="controls">
         <div class="help">
-          <span>← ↑ ↓ → MOVER</span>
-          <span>ESPACIO DISPARAR</span>
-          <span>SHIFT ESPECIAL</span>
+          <span data-i18n="move">← ↑ ↓ → MOVER</span>
+          <span data-i18n="shoot">ESPACIO DISPARAR</span>
+          <span data-i18n="shiftSpecial">SHIFT ESPECIAL</span>
         </div>
         <div class="touch-controls">
           <div class="dpad">
@@ -112,21 +113,21 @@
             <button data-key="ArrowDown">▼</button>
             <button data-key="ArrowRight">▶</button>
           </div>
-          <button data-key="Space" class="fire">FUEGO</button>
-          <button data-key="ShiftLeft" class="power">PODER</button>
+          <button data-key="Space" class="fire" data-i18n="fire">FUEGO</button>
+          <button data-key="ShiftLeft" class="power" data-i18n="power">PODER</button>
         </div>
       </div>
     </section>
 
     <section id="game-over" class="panel result hidden">
-      <p class="kicker">MISIÓN TERMINADA</p>
+      <p class="kicker" data-i18n="missionOver">MISIÓN TERMINADA</p>
       <h2 id="result-title">LA GLORIA TE ESPERA</h2>
-      <p>Puntuación final: <strong id="final-score">0</strong></p>
-      <p>Oleada alcanzada: <strong id="final-wave">1</strong></p>
-      <button id="again-btn" class="primary">VOLVER A JUGAR</button>
+      <p><span data-i18n="finalScore">Puntuación final</span>: <strong id="final-score">0</strong></p>
+      <p><span data-i18n="waveReached">Oleada alcanzada</span>: <strong id="final-wave">1</strong></p>
+      <button id="again-btn" class="primary" data-i18n="playAgain">VOLVER A JUGAR</button>
     </section>
   </main>
-  <footer class="footer"><span>© PILUKARTS</span><span>DISEÑADO PARA LA GLORIA</span></footer>
-  <script src="./game.js?v=12"></script>
+  <footer class="footer"><span>© PILUKARTS</span><span data-i18n="madeForGlory">DISEÑADO PARA LA GLORIA</span></footer>
+  <script src="./game.js?v=13"></script>
 </body>
 </html>
