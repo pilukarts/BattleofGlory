@@ -68,3 +68,11 @@ html.telegram .shell{width:min(1240px,100vw);padding-top:max(10px,env(safe-area-
 html.telegram .topbar{margin-top:4px}
 html.telegram .panel,html.telegram .game{border-radius:20px}
 @media(pointer:coarse){html.telegram .touch-controls{display:flex;margin-top:10px}html.telegram .help{display:none}}
+
+
+/* Cadet portrait framing correction from visual QA */
+.cadet{min-height:300px}
+.cadet-portrait{height:184px}
+.cadet-portrait img{top:50%;transform:translate(calc(var(--portrait-index) * -25%),-58%)}
+.welcome-avatar img{top:50%;transform:translate(calc(var(--portrait-index) * -25%),-52%)}
+@media(max-width:760px){.cadet{min-height:242px}.cadet-portrait{height:138px}.cadet-portrait img{transform:translate(calc(var(--portrait-index) * -25%),-57%)}}
