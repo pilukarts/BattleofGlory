@@ -99,3 +99,12 @@ html.telegram .panel,html.telegram .game{border-radius:20px}
 }
 html.telegram .shell{padding-top:max(64px,env(safe-area-inset-top),var(--tg-content-safe-area-inset-top,0px))}
 html.telegram .topbar{position:relative;z-index:4}
+
+
+/* Clear ship silhouettes and non-scaling star field */
+.space-star{transform-box:fill-box;transform-origin:center;animation:starTwinkle var(--twinkle,3s) ease-in-out infinite alternate}
+@keyframes starTwinkle{from{opacity:.16}to{opacity:.72}}
+.engine-flame{transform-box:fill-box;transform-origin:center top;animation:enginePulse .16s ease-in-out infinite alternate}
+@keyframes enginePulse{from{opacity:.45}to{opacity:1}}
+.player-ship,.enemy-ship{transform-box:fill-box;transform-origin:center}
+@media(prefers-reduced-motion:reduce){.space-star,.engine-flame{animation:none!important}}

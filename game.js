@@ -84,28 +84,39 @@ function setupMenu(){
 }
 
 function makeStars(){
-  for(let i=0;i<65;i++){
-    dom.stars.appendChild(svg('circle',{cx:Math.random()*W,cy:Math.random()*H,r:Math.random()*1.8+.3,fill:'#fff',opacity:Math.random()*.55+.15}));
+  for(let i=0;i<58;i++){
+    const x=Math.random()*W,y=Math.random()*H,size=Math.random()*2.2+.7;
+    const star=svg('path',{d:`M${x} ${y-size*2.4} L${x+size*.55} ${y-size*.55} L${x+size*2.4} ${y} L${x+size*.55} ${y+size*.55} L${x} ${y+size*2.4} L${x-size*.55} ${y+size*.55} L${x-size*2.4} ${y} L${x-size*.55} ${y-size*.55} Z`,fill:i%5===0?'#73eaff':'#fff',opacity:Math.random()*.48+.18,class:'space-star'});
+    star.style.setProperty('--twinkle',`${1.8+Math.random()*3}s`);
+    star.style.animationDelay=`${-Math.random()*4}s`;
+    dom.stars.appendChild(star);
   }
 }
 
 function characterNode(c){
-  const g=svg('g',{filter:'url(#glow)'});
-  g.append(svg('circle',{r:24,fill:c.color,opacity:.18,stroke:c.color,'stroke-width':2}));
-  g.append(svg('path',{d:'M0 -23 L18 17 L0 10 L-18 17 Z',fill:c.color,stroke:'#fff','stroke-width':2}));
-  g.append(svg('circle',{cy:-4,r:5,fill:'#fff'}));
+  const g=svg('g',{filter:'url(#glow)',class:'player-ship'});
+  g.append(svg('path',{d:'M0 -31 L9 -9 L27 19 L9 14 L0 23 L-9 14 L-27 19 L-9 -9 Z',fill:'#111a35',stroke:c.color,'stroke-width':3,'stroke-linejoin':'round'}));
+  g.append(svg('path',{d:'M0 -28 L8 8 L0 16 L-8 8 Z',fill:c.color,stroke:'#fff','stroke-width':1.4}));
+  g.append(svg('path',{d:'M-8 8 L-24 17 L-11 2 Z M8 8 L24 17 L11 2 Z',fill:c.color,opacity:.72}));
+  g.append(svg('ellipse',{cy:-5,rx:4.5,ry:7,fill:'#eaffff',stroke:c.color,'stroke-width':1.5}));
+  g.append(svg('path',{d:'M-7 15 L-3 28 L0 20 L3 28 L7 15',fill:c.color,opacity:.85,class:'engine-flame'}));
   return g;
 }
 
 function enemyNode(type){
   const m=monsterTypes[type];
-  const g=svg('g',{filter:'url(#glow)'});
-  g.append(svg('circle',{r:m.size,fill:m.color,opacity:.24,stroke:m.color,'stroke-width':2}));
-  const shape=type==='tank'?'M-22 -17 L22 -17 L27 8 L12 24 L-12 24 L-27 8 Z':type==='hunter'?'M0 -22 L18 17 L0 9 L-18 17 Z':'M-15 -10 L0 -20 L15 -10 L12 15 L0 9 L-12 15 Z';
-  g.append(svg('path',{d:shape,fill:m.color,opacity:.72,stroke:'#fff','stroke-width':1.5}));
-  g.append(svg('circle',{cy:-4,r:type==='tank'?6:4,fill:'#fff'}));
-  const label=svg('text',{y:m.size+14,class:'monster-label'});
-  label.textContent=m.label; g.append(label);
+  const g=svg('g',{filter:'url(#glow)',class:'enemy-ship '+type});
+  const shape=type==='tank'
+    ?'M0 -28 L23 -17 L29 8 L16 24 L5 17 L0 27 L-5 17 L-16 24 L-29 8 L-23 -17 Z'
+    :type==='hunter'
+      ?'M0 -27 L10 -7 L25 18 L7 12 L0 22 L-7 12 L-25 18 L-10 -7 Z'
+      :'M0 -23 L18 -10 L23 11 L9 19 L0 12 L-9 19 L-23 11 L-18 -10 Z';
+  g.append(svg('path',{d:shape,fill:'#15152d',stroke:m.color,'stroke-width':3,'stroke-linejoin':'round'}));
+  g.append(svg('path',{d:type==='tank'?'M-16 -10 L16 -10 L11 12 L0 5 L-11 12 Z':'M0 -18 L8 8 L0 15 L-8 8 Z',fill:m.color,opacity:.82}));
+  g.append(svg('ellipse',{cy:-5,rx:type==='tank'?7:4.5,ry:type==='tank'?5:6,fill:'#fff',stroke:m.color,'stroke-width':1.5}));
+  g.append(svg('path',{d:'M-6 15 L0 27 L6 15',fill:m.color,opacity:.75,class:'engine-flame'}));
+  const label=svg('text',{y:m.size+18,class:'monster-label'});
+  label.textContent=m.label;g.append(label);
   return g;
 }
 
