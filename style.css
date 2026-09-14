@@ -76,3 +76,26 @@ html.telegram .panel,html.telegram .game{border-radius:20px}
 .cadet-portrait img{top:50%;transform:translate(calc(var(--portrait-index) * -25%),-58%)}
 .welcome-avatar img{top:50%;transform:translate(calc(var(--portrait-index) * -25%),-52%)}
 @media(max-width:760px){.cadet{min-height:242px}.cadet-portrait{height:138px}.cadet-portrait img{transform:translate(calc(var(--portrait-index) * -25%),-57%)}}
+
+
+/* Tablet and iPad WebView layout */
+@media(max-width:960px){
+  .shell{width:96vw;padding-top:18px}
+  .hero{grid-template-columns:1fr;min-height:auto;gap:28px;padding:30px}
+  .hero-copy{align-items:center;text-align:center}
+  .hero-copy>p:last-of-type{max-width:54ch}
+  .mission-stats{justify-content:center}
+  .selector-head{max-width:680px;margin-inline:auto}
+  .cadet-grid{max-width:680px;margin-inline:auto}
+  .primary{max-width:680px;display:block;margin-inline:auto}
+  .cadet{min-height:276px}
+  .cadet-portrait{height:166px}
+}
+@media(max-width:600px){
+  .hero{padding:24px 16px}
+  .hero-copy{align-items:flex-start;text-align:left}
+  .mission-stats{justify-content:flex-start}
+  .cadet-grid{grid-template-columns:1fr 1fr}
+}
+html.telegram .shell{padding-top:max(64px,env(safe-area-inset-top),var(--tg-content-safe-area-inset-top,0px))}
+html.telegram .topbar{position:relative;z-index:4}
