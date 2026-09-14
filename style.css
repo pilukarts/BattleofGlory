@@ -60,3 +60,11 @@ body:after{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;opac
 .score-popup{font-family:Oxanium,sans-serif;font-size:24px;font-weight:800;fill:#fff;stroke:#6feaff;stroke-width:1px;paint-order:stroke;filter:drop-shadow(0 0 7px #62e6ff)}
 #score{font-size:1.1rem;text-shadow:0 0 12px #62e6ff}
 @media(max-width:760px){.cadet{min-height:220px}.cadet-portrait{height:116px}.cadet-score{margin:8px -10px -10px!important}.galaxy{width:75vw;height:38vw;left:-30vw}.flyby-ship{transform:scale(.7)}.battle-logo b{letter-spacing:.25em}}
+
+
+/* Telegram Mini App integration */
+html.telegram,html.telegram body{min-height:var(--tg-viewport-stable-height,100vh);background-color:var(--tg-theme-bg-color,#050715)}
+html.telegram .shell{width:min(1240px,100vw);padding-top:max(10px,env(safe-area-inset-top),var(--tg-content-safe-area-inset-top,0px));padding-right:max(10px,env(safe-area-inset-right),var(--tg-content-safe-area-inset-right,0px));padding-bottom:max(14px,env(safe-area-inset-bottom),var(--tg-content-safe-area-inset-bottom,0px));padding-left:max(10px,env(safe-area-inset-left),var(--tg-content-safe-area-inset-left,0px))}
+html.telegram .topbar{margin-top:4px}
+html.telegram .panel,html.telegram .game{border-radius:20px}
+@media(pointer:coarse){html.telegram .touch-controls{display:flex;margin-top:10px}html.telegram .help{display:none}}

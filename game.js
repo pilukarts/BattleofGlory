@@ -1,5 +1,19 @@
 'use strict';
 
+const telegram=window.Telegram?.WebApp||null;
+if(telegram){
+  document.documentElement.classList.add('telegram');
+  telegram.ready();
+  telegram.expand();
+  telegram.setHeaderColor?.('#050715');
+  telegram.setBackgroundColor?.('#050715');
+  telegram.setBottomBarColor?.('#050715');
+  try{if(telegram.isVersionAtLeast?.('8.0'))telegram.requestFullscreen?.()}catch{}
+}
+function haptic(type='light'){
+  try{telegram?.HapticFeedback?.impactOccurred(type)}catch{}
+}
+
 const NS = 'http://www.w3.org/2000/svg';
 const W = 960, H = 640;
 const cadets = [
@@ -62,6 +76,7 @@ function setupMenu(){
       selected=c;
       document.querySelectorAll('.cadet').forEach(x=>x.classList.remove('selected'));
       button.classList.add('selected');
+      haptic('light');
       tone(420, .05);
     };
     dom.cadet_grid.appendChild(button);
@@ -98,6 +113,7 @@ function position(obj){ obj.node.setAttribute('transform',`translate(${obj.x} ${
 
 function startGame(){
   initAudio();
+  haptic('medium');
   dom.menu.classList.add('hidden');
   dom.game_over.classList.add('hidden');
   dom.game.classList.remove('hidden');
@@ -159,10 +175,12 @@ function fire(){
     dom.entities.append(b.node); bullets.push(b);
   });
   tone(650,.035);
+  haptic('light');
 }
 
 function special(){
   if(!playing || !specialReady)return;
+  haptic('heavy');
   specialReady=false; dom.special.textContent='CARGANDO';
   tone(180,.28);
   enemies.forEach(e=>{
@@ -217,7 +235,7 @@ function updateEnemies(dt,now){
     if(d<45 && now-e.hitAt>700){
       e.hitAt=now;
       const damage=activeBonus==='shield'?4:e.type==='tank'?18:10;
-      player.hp-=damage;dom.arena.animate([{filter:'brightness(2)'},{filter:'none'}],{duration:180});tone(110,.08)
+      player.hp-=damage;haptic('heavy');dom.arena.animate([{filter:'brightness(2)'},{filter:'none'}],{duration:180});tone(110,.08)
     }
     if(e.hp<=0){
       e.dead=true;
@@ -250,7 +268,7 @@ function dropBonus(x,y,forced){
 function updatePickups(now){
   pickups.forEach(p=>{
     if(Math.hypot(p.x-player.x,p.y-player.y)<38){
-      p.dead=true;gainScore(100,p.x,p.y);activateBonus(p.type);tone(920,.12);
+      p.dead=true;gainScore(100,p.x,p.y);activateBonus(p.type);haptic('medium');tone(920,.12);
     }
     if(now-p.created>12000)p.dead=true;
   });
