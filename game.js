@@ -17,10 +17,10 @@ function haptic(type='light'){
 const NS = 'http://www.w3.org/2000/svg';
 const W = 960, H = 640;
 const cadets = [
-  {id:'inferno',name:'INFERNO',icon:'🔥',color:'#ff604b',planet:'PYRA',power:'Nova explosiva',welcome:'El fuego de Pyra luchará contigo.',speed:250,damage:2},
-  {id:'glacier',name:'GLACIER',icon:'❄️',color:'#65ddff',planet:'NIVALIS',power:'Congelación total',welcome:'Mantén la calma. Nivalis nos protege.',speed:220,damage:2},
-  {id:'viper',name:'VIPER',icon:'🐍',color:'#6eff7d',planet:'VERDANT',power:'Ráfaga venenosa',welcome:'Velocidad, precisión y victoria.',speed:285,damage:1},
-  {id:'celestial',name:'CELESTIAL',icon:'⭐',color:'#c27aff',planet:'ASTRA',power:'Pulso cósmico',welcome:'Las estrellas han marcado nuestro camino.',speed:235,damage:3}
+  {id:'inferno',name:'INFERNO',icon:'🔥',color:'#ff604b',planet:'PYRA',power:'Nova explosiva',welcome:'El fuego de Pyra luchará contigo.',speed:330,damage:2},
+  {id:'glacier',name:'GLACIER',icon:'❄️',color:'#65ddff',planet:'NIVALIS',power:'Congelación total',welcome:'Mantén la calma. Nivalis nos protege.',speed:300,damage:2},
+  {id:'viper',name:'VIPER',icon:'🐍',color:'#6eff7d',planet:'VERDANT',power:'Ráfaga venenosa',welcome:'Velocidad, precisión y victoria.',speed:370,damage:1},
+  {id:'celestial',name:'CELESTIAL',icon:'⭐',color:'#c27aff',planet:'ASTRA',power:'Pulso cósmico',welcome:'Las estrellas han marcado nuestro camino.',speed:315,damage:3}
 ];
 
 const dom = Object.fromEntries(['menu','game','game-over','cadet-grid','start-btn','again-btn','arena','entities','stars','message','score','wave','health','special','hud-cadet','final-score','final-wave','result-title','sound-btn','bonus','welcome','welcome-avatar','welcome-title','welcome-copy'].map(id => [id.replaceAll('-','_'), document.getElementById(id)]));
@@ -150,11 +150,11 @@ function showWelcome(onComplete){
   dom.welcome_copy.textContent=selected.welcome;
   dom.welcome.classList.remove('hidden','exit');
   tone(240,.18);
-  setTimeout(()=>tone(520,.25),420);
+  setTimeout(()=>tone(520,.2),250);
   setTimeout(()=>{
     dom.welcome.classList.add('exit');
-    setTimeout(()=>{dom.welcome.classList.add('hidden');dom.welcome.classList.remove('exit');onComplete()},650);
-  },1900);
+    setTimeout(()=>{dom.welcome.classList.add('hidden');dom.welcome.classList.remove('exit');onComplete()},380);
+  },1050);
 }
 
 function spawnWave(){
@@ -166,7 +166,7 @@ function spawnWave(){
     const roll=Math.random();
     const type=wave>=4&&roll<.2?'tank':wave>=2&&roll<.48?'hunter':'drone';
     const m=monsterTypes[type];
-    const e={type,x:edge===0?30:edge===1?W-30:60+Math.random()*(W-120),y:edge===2?35:50+Math.random()*260,hp:m.hp+Math.floor(wave/5),speed:(48+wave*5)*m.speed,node:enemyNode(type),hitAt:0};
+    const e={type,x:edge===0?30:edge===1?W-30:60+Math.random()*(W-120),y:edge===2?35:50+Math.random()*260,hp:m.hp+Math.floor(wave/5),speed:(68+wave*7)*m.speed,node:enemyNode(type),hitAt:0};
     dom.entities.append(e.node); position(e); enemies.push(e);
   }
   if(bonusRound){
@@ -175,14 +175,14 @@ function spawnWave(){
 }
 
 function fire(){
-  const cooldown=activeBonus==='rapid'?75:180;
+  const cooldown=activeBonus==='rapid'?48:125;
   if(!playing || performance.now()-player.shotAt<cooldown)return;
   player.shotAt=performance.now();
   const angles=activeBonus==='triple'?[-.24,0,.24]:[0];
   angles.forEach(offset=>{
     const base=Math.atan2(player.dirY,player.dirX)+offset;
     const dx=Math.cos(base),dy=Math.sin(base);
-    const b={x:player.x+dx*28,y:player.y+dy*28,vx:dx*560,vy:dy*560,damage:selected.damage,node:svg('circle',{r:6,fill:selected.color,filter:'url(#glow)'})};
+    const b={x:player.x+dx*28,y:player.y+dy*28,vx:dx*760,vy:dy*760,damage:selected.damage,node:svg('circle',{r:6,fill:selected.color,filter:'url(#glow)'})};
     dom.entities.append(b.node); bullets.push(b);
   });
   tone(650,.035);
@@ -212,7 +212,7 @@ function loop(now){
   updatePlayer(dt); updateBullets(dt); updateEnemies(dt,now); updatePickups(now); cleanup();
   if(enemies.length===0){
     nextWaveTimer+=dt;
-    if(nextWaveTimer>1.4){wave++;nextWaveTimer=0;announce('OLEADA '+wave);spawnWave();}
+    if(nextWaveTimer>.65){wave++;nextWaveTimer=0;announce('OLEADA '+wave);spawnWave();}
   }
   updateHud();
   requestAnimationFrame(loop);
@@ -332,4 +332,4 @@ dom.again_btn.onclick=()=>{dom.game_over.classList.add('hidden');dom.menu.classL
 dom.sound_btn.onclick=()=>{muted=!muted;dom.sound_btn.textContent=muted?'🔇':'🔊'};
 setupMenu();makeStars();
 
-window.addEventListener('load',()=>setTimeout(()=>document.getElementById('boot-screen')?.classList.add('boot-done'),900));
+window.addEventListener('load',()=>setTimeout(()=>document.getElementById('boot-screen')?.classList.add('boot-done'),450));
